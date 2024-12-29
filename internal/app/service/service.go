@@ -1,14 +1,18 @@
 package service
 
-import "github.com/Nikita-Kolbin/dictionary/internal/app/model"
+import (
+	"context"
+	
+	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+)
 
 type repository interface {
-	// repo
+	CreateUser(ctx context.Context, user *model.User) error
 }
 
 type tgClient interface {
 	Updates(offset, limit int) ([]*model.Update, error)
-	Send(chatID int, msg string) error
+	Send(chatID int, msg string, withFormat bool) error
 }
 
 type Service struct {

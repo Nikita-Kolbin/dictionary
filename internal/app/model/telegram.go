@@ -1,5 +1,18 @@
 package model
 
+import "errors"
+
+var ErrUnknownCommand = errors.New("unknown command")
+
+const (
+	StartCMD = "/start"
+	HelpCMD  = "/help"
+
+	UnknownCommandMSG = `Неизвестная команда /help`
+	StartMSG          = `Привет, инфа /help`
+	HelpMSG           = `Список команд:`
+)
+
 type UpdatesResponse struct {
 	Ok     bool      `json:"ok"`
 	Result []*Update `json:"result"`
