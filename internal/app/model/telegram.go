@@ -1,8 +1,8 @@
 package model
 
 type UpdatesResponse struct {
-	Ok     bool     `json:"ok"`
-	Result []Update `json:"result"`
+	Ok     bool      `json:"ok"`
+	Result []*Update `json:"result"`
 }
 
 type Update struct {
