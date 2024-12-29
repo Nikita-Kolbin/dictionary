@@ -41,7 +41,7 @@ func New() (*Config, error) {
 	cfg := &Config{}
 
 	if os.Getenv(ENVInDocker) == "" {
-		if err := godotenv.Load("./local.env"); err != nil {
+		if err := godotenv.Load("./env/local.env"); err != nil {
 			return nil, err
 		}
 	}

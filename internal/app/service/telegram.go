@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 	"log"
 	"time"
+
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
 const tgLimit = 100

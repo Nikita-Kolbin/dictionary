@@ -1,0 +1,45 @@
+services:
+
+  backend:
+    build: ./
+    env_file: ./env/.env
+    ports:
+      - 8082:8082
+    networks:
+      - backend_nw
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  postgresql:
+    image: postgres:16
+    ports:
+      - 5050:5432
+    env_file: ./env/.env
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+    networks:
+      - backend_nw
+    healthcheck:
+      test: pg_isready -U postgres -d test_db
+      interval: 20s
+      timeout: 20s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    env_file: ./env/.env
+    volumes:
+      - ./migrations:/database
+    networks:
+      - backend_nw
+    command: [ "-path", "/database", "-database",  "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:5432/${POSTGRES_DB_NAME}?sslmode=disable", "up" ]
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+volumes:
+  postgresql: {}
+
+networks:
+  backend_nw: {}

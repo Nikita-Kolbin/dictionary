@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/app/config"
-	"github.com/Nikita-Kolbin/dictionary/internal/app/service"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/clients/telegram"
 	"os"
 
+	"github.com/Nikita-Kolbin/dictionary/internal/app/config"
+	"github.com/Nikita-Kolbin/dictionary/internal/app/repository"
+	"github.com/Nikita-Kolbin/dictionary/internal/app/service"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/clients/telegram"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
@@ -24,9 +25,15 @@ func initApp(ctx context.Context) error {
 		return fmt.Errorf("init config failed: %w", err)
 	}
 
+	repo, err := repository.New(ctx, &cfg.Postgres)
+	if err != nil {
+		return fmt.Errorf("init reposytory failed: %w", err)
+	}
+	defer repo.Close(ctx)
+
 	tgCli := telegram.New(cfg.TelegramToken)
 
-	srv := service.New(tgCli)
+	srv := service.New(repo, tgCli)
 
 	srv.RunTelegramProcessor(ctx)
 
