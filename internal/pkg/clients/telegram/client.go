@@ -51,9 +51,9 @@ func (c *TGClient) Updates(offset, limit int) ([]*model.Update, error) {
 	return resp.Result, nil
 }
 
-func (c *TGClient) Send(chatId int, msg string) error {
+func (c *TGClient) Send(chatID int, msg string) error {
 	q := url.Values{}
-	q.Add("chat_id", strconv.Itoa(chatId))
+	q.Add("chat_id", strconv.Itoa(chatID))
 	q.Add("text", msg)
 
 	if _, err := c.doRequest(sendMessageMethod, q); err != nil {
