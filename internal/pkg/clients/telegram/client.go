@@ -16,6 +16,7 @@ const (
 	tgBotHost         = "api.telegram.org"
 	sendMessageMethod = "sendMessage"
 	getUpdatesMethod  = "getUpdates"
+	parseMode         = "MarkdownV2"
 )
 
 type TGClient struct {
@@ -51,10 +52,13 @@ func (c *TGClient) Updates(offset, limit int) ([]*model.Update, error) {
 	return resp.Result, nil
 }
 
-func (c *TGClient) Send(chatID int, msg string) error {
+func (c *TGClient) Send(chatID int, msg string, withFormat bool) error {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatID))
 	q.Add("text", msg)
+	if withFormat {
+		q.Add("parse_mode", parseMode)
+	}
 
 	if _, err := c.doRequest(sendMessageMethod, q); err != nil {
 		return fmt.Errorf("can't send message: %w", err)
