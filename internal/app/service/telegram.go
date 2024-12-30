@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -28,8 +30,8 @@ func (s *Service) processUpdates(ctx context.Context) {
 	for _, u := range updates {
 		logger.Info(ctx, "fetch message", "text", u.Message.Text, "from", u.Message.From.Username)
 
-		request := s.processCommand(ctx, u.Message)
-		err = s.tgClient.Send(u.Message.Chat.ID, request, true)
+		request, format := s.processCommand(ctx, u.Message)
+		err = s.tgClient.Send(u.Message.Chat.ID, request, format)
 		if err != nil {
 			logger.Error(ctx, "can't, send message:", err)
 		}
@@ -40,31 +42,87 @@ func (s *Service) processUpdates(ctx context.Context) {
 	}
 }
 
-func (s *Service) processCommand(ctx context.Context, msg *model.Message) string {
+func (s *Service) processCommand(ctx context.Context, msg *model.Message) (text string, format bool) {
 	if msg.Text == "" || msg.Text[0] != '/' {
-		return model.UnknownCommandMSG
+		return model.UnknownCommandMSG, false
 	}
 
-	var err error
 	command, arg, _ := strings.Cut(msg.Text, " ")
 	_ = arg
 
 	switch command {
 	case model.HelpCMD:
-		return model.HelpMSG
-
+		return model.HelpMSG, false
 	case model.StartCMD:
-		user := &model.User{
-			Username: msg.From.Username,
-			ChatID:   msg.Chat.ID,
-		}
-		err = s.CreateUser(ctx, user)
-		if err != nil {
-			logger.Error(ctx, "can't, create user:", "err", err, "user", user.Username)
-		}
-		return model.StartMSG
-
+		return s.createUserTG(ctx, msg), false
+	case model.AddCMD:
+		return s.addWordTG(ctx, msg, arg), false
+	case model.AddTimeCMD:
+		return s.addNotificationTimeTG(ctx, msg, arg), false
 	default:
-		return model.UnknownCommandMSG
+		return model.UnknownCommandMSG, false
 	}
+}
+
+func (s *Service) createUserTG(ctx context.Context, msg *model.Message) string {
+	user := &model.User{
+		Username: msg.From.Username,
+		ChatID:   msg.Chat.ID,
+	}
+	if err := s.CreateUser(ctx, user); err != nil {
+		logger.Error(ctx, "can't, create user:", "err", err, "user", user.Username)
+	}
+	logger.Info(ctx, "user created:", "user", user.Username)
+	return model.StartMSG
+}
+
+func (s *Service) addWordTG(ctx context.Context, msg *model.Message, arg string) string {
+	w, tw, e, te := parseWord(arg)
+	if len(arg) == 0 || len(w) == 0 || len(tw) == 0 {
+		return model.AddEmptyMSG
+	}
+
+	word := &model.Word{
+		Word:              w,
+		TranslatedWord:    tw,
+		Example:           e,
+		TranslatedExample: te,
+		Username:          msg.From.Username,
+	}
+
+	err := s.CreateWord(ctx, word)
+	if err != nil {
+		logger.Error(ctx, "can't, create word:", "err", err, "word", w, "user", msg.From.Username)
+		if errors.Is(err, model.ErrAlreadyExists) {
+			return model.AddAlreadyExistsMSG
+		}
+		return model.AddErrorMSG
+	}
+
+	logger.Error(ctx, "word created:", "word", w, "user", msg.From.Username)
+	return fmt.Sprintf(model.AddSuccessMSG, w)
+}
+
+func (s *Service) addNotificationTimeTG(ctx context.Context, msg *model.Message, arg string) string {
+	arg = strings.TrimSpace(arg)
+
+	t, err := parseTime(arg)
+	if err != nil {
+		return model.AddTimeEmptyMSG
+	}
+
+	err = s.AddNotificationTime(ctx, msg.From.Username, t)
+	if err != nil {
+		logger.Error(ctx, "can't create notification time:", "err", err, "time", arg, "user", msg.From.Username)
+		if errors.Is(err, model.ErrAlreadyExists) {
+			return model.AddTimeAlreadyExistsMSG
+		}
+		if errors.Is(err, model.ErrNotificationLimit) {
+			return model.AddTimeLimitMSG
+		}
+		return model.AddTimeErrorMSG
+	}
+
+	logger.Error(ctx, "notification time created:", "time", arg, "user", msg.From.Username)
+	return fmt.Sprintf(model.AddTimeSuccessMSG, arg)
 }

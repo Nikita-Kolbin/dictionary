@@ -17,3 +17,13 @@ CREATE TABLE IF NOT EXISTS words (
     created TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE (word, username)
 );
+
+CREATE TABLE IF NOT EXISTS notification_times (
+    time TIME NOT NULL,
+    username TEXT NOT NULL,
+    UNIQUE (time, username)
+);
+CREATE INDEX IF NOT EXISTS
+    notification_times_idx ON notification_times (time);
+
+-- map[time][]userID

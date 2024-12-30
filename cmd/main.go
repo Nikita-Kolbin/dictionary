@@ -36,6 +36,7 @@ func initApp(ctx context.Context) error {
 	srv := service.New(repo, tgCli)
 
 	srv.RunTelegramProcessor(ctx)
+	logger.Info(ctx, "init app success")
 
 	ch := make(chan os.Signal, 1)
 	<-ch
