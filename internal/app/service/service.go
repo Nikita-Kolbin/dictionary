@@ -9,8 +9,11 @@ import (
 
 type repository interface {
 	CreateUser(ctx context.Context, user *model.User) error
+	GetUser(ctx context.Context, username string) (*model.User, error)
 
 	CreateWord(ctx context.Context, word *model.Word) error
+	GetWordsForNotification(ctx context.Context, username string, limit int) ([]*model.Word, error)
+	AddCorrectAnswerToWord(ctx context.Context, id int) error
 
 	GetNotificationTimes(ctx context.Context, username string) ([]time.Time, error)
 	AddNotificationTime(ctx context.Context, username string, t time.Time) error
@@ -18,7 +21,8 @@ type repository interface {
 
 type tgClient interface {
 	Updates(offset, limit int) ([]*model.Update, error)
-	Send(chatID int, msg string, withFormat bool) error
+	Send(chatID int, msg string, withFormat bool) (*model.Response, error)
+	Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error
 }
 
 type Service struct {

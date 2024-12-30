@@ -13,10 +13,13 @@ import (
 )
 
 const (
-	tgBotHost         = "api.telegram.org"
+	tgBotHost = "api.telegram.org"
+
 	sendMessageMethod = "sendMessage"
+	editMessageMethod = "editMessageText"
 	getUpdatesMethod  = "getUpdates"
-	parseMode         = "MarkdownV2"
+
+	parseMode = "MarkdownV2"
 )
 
 type TGClient struct {
@@ -52,16 +55,50 @@ func (c *TGClient) Updates(offset, limit int) ([]*model.Update, error) {
 	return resp.Result, nil
 }
 
-func (c *TGClient) Send(chatID int, msg string, withFormat bool) error {
+func (c *TGClient) Send(chatID int, msg string, withFormat bool) (*model.Response, error) {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatID))
 	q.Add("text", msg)
+
 	if withFormat {
 		q.Add("parse_mode", parseMode)
 	}
 
-	if _, err := c.doRequest(sendMessageMethod, q); err != nil {
-		return fmt.Errorf("can't send message: %w", err)
+	byteResp, err := c.doRequest(sendMessageMethod, q)
+	if err != nil {
+		return nil, fmt.Errorf("can't send message: %w", err)
+	}
+
+	resp := &model.Response{}
+	if err := json.Unmarshal(byteResp, resp); err != nil {
+		return nil, fmt.Errorf("can't parse response: %w", err)
+	}
+
+	return resp, nil
+}
+
+func (c *TGClient) Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error {
+	q := url.Values{}
+	q.Add("chat_id", strconv.Itoa(chatID))
+	q.Add("message_id", strconv.Itoa(msgID))
+	q.Add("text", msg)
+
+	if withFormat {
+		q.Add("parse_mode", parseMode)
+	}
+
+	if key != nil {
+		strKey, err := json.Marshal(key)
+		if err != nil {
+			return fmt.Errorf("can't send message: %w", err)
+		}
+		q.Add("reply_markup", string(strKey))
+	} else {
+		q.Add("reply_markup", "")
+	}
+
+	if _, err := c.doRequest(editMessageMethod, q); err != nil {
+		return fmt.Errorf("can't edit message: %w", err)
 	}
 
 	return nil
@@ -89,6 +126,9 @@ func (c *TGClient) doRequest(method string, query url.Values) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't do request: %w", err)
 	}
+
+	strBody := string(body)
+	_ = strBody
 
 	return body, nil
 }

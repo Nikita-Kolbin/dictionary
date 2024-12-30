@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -24,16 +24,15 @@ func (s *Service) RunTelegramProcessor(ctx context.Context) {
 func (s *Service) processUpdates(ctx context.Context) {
 	updates, err := s.tgClient.Updates(s.tgOffset, model.TelegramUpdateLimit)
 	if err != nil {
-		log.Println("can't, get updates:", err)
+		logger.Error(ctx, "can't, get updates", "err", err)
 	}
 
 	for _, u := range updates {
-		logger.Info(ctx, "fetch message", "text", u.Message.Text, "from", u.Message.From.Username)
-
-		request, format := s.processCommand(ctx, u.Message)
-		err = s.tgClient.Send(u.Message.Chat.ID, request, format)
-		if err != nil {
-			logger.Error(ctx, "can't, send message:", err)
+		if u.Message != nil {
+			logger.Info(ctx, "fetch message", "text", u.Message.Text, "from", u.Message.From.Username)
+			s.processCommand(ctx, u.Message)
+		} else if u.CallbackQuery != nil {
+			s.processCallback(ctx, u.CallbackQuery)
 		}
 	}
 
@@ -42,25 +41,97 @@ func (s *Service) processUpdates(ctx context.Context) {
 	}
 }
 
-func (s *Service) processCommand(ctx context.Context, msg *model.Message) (text string, format bool) {
+func (s *Service) processCommand(ctx context.Context, msg *model.Message) {
+	chatID := msg.Chat.ID
+
 	if msg.Text == "" || msg.Text[0] != '/' {
-		return model.UnknownCommandMSG, false
+		_, err := s.tgClient.Send(chatID, model.UnknownCommandMSG, false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
 	}
 
 	command, arg, _ := strings.Cut(msg.Text, " ")
 	_ = arg
 
 	switch command {
+
 	case model.HelpCMD:
-		return model.HelpMSG, false
+		_, err := s.tgClient.Send(chatID, model.HelpMSG, false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
+
 	case model.StartCMD:
-		return s.createUserTG(ctx, msg), false
+		_, err := s.tgClient.Send(chatID, s.createUserTG(ctx, msg), false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
+
 	case model.AddCMD:
-		return s.addWordTG(ctx, msg, arg), false
+		_, err := s.tgClient.Send(chatID, s.addWordTG(ctx, msg, arg), false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
+
+	case model.GetCMD:
+		text, wordID := s.getOneWordTG(ctx, msg.From.Username)
+
+		resp, err := s.tgClient.Send(chatID, text, true)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+
+		key := s.getKeyTG(wordID, chatID, resp.Result.MessageId)
+		err = s.tgClient.Edit(text, chatID, resp.Result.MessageId, true, key)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+
+		return
+
 	case model.AddTimeCMD:
-		return s.addNotificationTimeTG(ctx, msg, arg), false
+		_, err := s.tgClient.Send(chatID, s.addNotificationTimeTG(ctx, msg, arg), false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
+
 	default:
-		return model.UnknownCommandMSG, false
+		_, err := s.tgClient.Send(chatID, model.UnknownCommandMSG, false)
+		if err != nil {
+			logger.Error(ctx, "can't, send message", "err", err)
+		}
+		return
+	}
+}
+
+func (s *Service) processCallback(ctx context.Context, cb *model.CallbackQuery) {
+	data := &model.CallbackData{}
+	if err := json.Unmarshal([]byte(cb.Data), data); err != nil {
+		logger.Error(ctx, "can't, unmarshal callback data", "err", err)
+		return
+	}
+
+	var postfix string
+	if data.Correct {
+		postfix = "\n" + model.GoodButton
+		err := s.repo.AddCorrectAnswerToWord(ctx, data.WordID)
+		if err != nil {
+			logger.Error(ctx, "can't, add correct answer to word", "err", err, "id", data.WordID)
+		}
+	} else {
+		postfix = "\n" + model.BadButton
+	}
+
+	text := cb.Message.Text + postfix
+	err := s.tgClient.Edit(text, data.ChatID, data.MessageID, true, nil)
+	if err != nil {
+		logger.Error(ctx, "can't, edit message", "err", err)
 	}
 }
 
@@ -70,9 +141,9 @@ func (s *Service) createUserTG(ctx context.Context, msg *model.Message) string {
 		ChatID:   msg.Chat.ID,
 	}
 	if err := s.CreateUser(ctx, user); err != nil {
-		logger.Error(ctx, "can't, create user:", "err", err, "user", user.Username)
+		logger.Error(ctx, "can't, create user", "err", err, "user", user.Username)
 	}
-	logger.Info(ctx, "user created:", "user", user.Username)
+	logger.Info(ctx, "user created", "user", user.Username)
 	return model.StartMSG
 }
 
@@ -92,14 +163,14 @@ func (s *Service) addWordTG(ctx context.Context, msg *model.Message, arg string)
 
 	err := s.CreateWord(ctx, word)
 	if err != nil {
-		logger.Error(ctx, "can't, create word:", "err", err, "word", w, "user", msg.From.Username)
+		logger.Error(ctx, "can't, create word", "err", err, "word", w, "user", msg.From.Username)
 		if errors.Is(err, model.ErrAlreadyExists) {
 			return model.AddAlreadyExistsMSG
 		}
 		return model.AddErrorMSG
 	}
 
-	logger.Error(ctx, "word created:", "word", w, "user", msg.From.Username)
+	logger.Error(ctx, "word created", "word", w, "user", msg.From.Username)
 	return fmt.Sprintf(model.AddSuccessMSG, w)
 }
 
@@ -113,7 +184,7 @@ func (s *Service) addNotificationTimeTG(ctx context.Context, msg *model.Message,
 
 	err = s.AddNotificationTime(ctx, msg.From.Username, t)
 	if err != nil {
-		logger.Error(ctx, "can't create notification time:", "err", err, "time", arg, "user", msg.From.Username)
+		logger.Error(ctx, "can't create notification time", "err", err, "time", arg, "user", msg.From.Username)
 		if errors.Is(err, model.ErrAlreadyExists) {
 			return model.AddTimeAlreadyExistsMSG
 		}
@@ -123,6 +194,33 @@ func (s *Service) addNotificationTimeTG(ctx context.Context, msg *model.Message,
 		return model.AddTimeErrorMSG
 	}
 
-	logger.Error(ctx, "notification time created:", "time", arg, "user", msg.From.Username)
+	logger.Error(ctx, "notification time created", "time", arg, "user", msg.From.Username)
 	return fmt.Sprintf(model.AddTimeSuccessMSG, arg)
+}
+
+func (s *Service) getOneWordTG(ctx context.Context, username string) (string, int) {
+	word, err := s.repo.GetWordsForNotification(ctx, username, 1)
+	if err != nil {
+		logger.Error(ctx, "can't get one word:", "user", username, "err", err)
+		return model.GetErrorMSG, 0
+	}
+	if len(word) == 0 {
+		return model.GetUserHaveNotWordsMSG, 0
+	}
+
+	// TODO: Вынести билдинг сообщения
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, word[0].Word))
+	builder.WriteRune('\n')
+	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, word[0].TranslatedWord))
+	if len(word[0].Example) > 0 {
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, word[0].Example))
+	}
+	if len(word[0].TranslatedExample) > 0 {
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, word[0].TranslatedExample))
+	}
+
+	return builder.String(), word[0].ID
 }
