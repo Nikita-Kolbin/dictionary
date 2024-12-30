@@ -1,16 +1,34 @@
 package model
 
-import "errors"
-
-var ErrUnknownCommand = errors.New("unknown command")
-
 const (
-	StartCMD = "/start"
-	HelpCMD  = "/help"
-
 	UnknownCommandMSG = `Неизвестная команда /help`
-	StartMSG          = `Привет, инфа /help`
-	HelpMSG           = `Список команд:`
+
+	StartCMD = `/start`
+	StartMSG = `Привет, инфа /help`
+
+	HelpCMD = `/help`
+	HelpMSG = `Список команд:
+
+/add <word>, <translate>, <example>, <translate>
+Обязательно указать слово и перевод, разделитель - запятая
+пример и перевод примера оптимальные параметры
+
+/add_time <time>
+Добавить время для рассылки в формате 16:00
+Не более 3 раз за день`
+
+	AddCMD              = `/add`
+	AddSuccessMSG       = `Слово "%s" добавленно!`
+	AddAlreadyExistsMSG = `Это слово уже есть в коллекции`
+	AddEmptyMSG         = `Слово или перевод не указано`
+	AddErrorMSG         = `Не удалось добавить слово`
+
+	AddTimeCMD              = `/add_time`
+	AddTimeSuccessMSG       = `Добавленно время для рассылки - %s`
+	AddTimeAlreadyExistsMSG = `Это время и так указано`
+	AddTimeEmptyMSG         = `Время не указано или указано не верно`
+	AddTimeLimitMSG         = `Уже указано максимальное кол-во рассылок, сначала удалите одну через /del`
+	AddTimeErrorMSG         = `Не удалось добавить время`
 )
 
 type UpdatesResponse struct {
