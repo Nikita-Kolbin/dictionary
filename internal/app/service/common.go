@@ -1,10 +1,13 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
 	"time"
+	
+	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
 func parseWord(text string) (word, trWord, example, trExample string) {
@@ -45,4 +48,37 @@ func parseTime(text string) (time.Time, error) {
 	res, _ := time.Parse(time.TimeOnly, "00:00:00")
 	res = res.Add(time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute)
 	return res, nil
+}
+
+func (s *Service) getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
+	goodData := &model.CallbackData{
+		WordID:    wordID,
+		ChatID:    chatID,
+		MessageID: msgID,
+		Correct:   true,
+	}
+	badData := &model.CallbackData{
+		WordID:    wordID,
+		ChatID:    chatID,
+		MessageID: msgID,
+		Correct:   false,
+	}
+
+	good, _ := json.Marshal(goodData)
+	bad, _ := json.Marshal(badData)
+
+	key := &model.InlineKeyboardMarkup{
+		InlineKeyboard: [][]*model.InlineKeyboardButton{{
+			{
+				Text:         model.GoodButton,
+				CallbackData: string(good),
+			},
+			{
+				Text:         model.BadButton,
+				CallbackData: string(bad),
+			},
+		}},
+	}
+
+	return key
 }

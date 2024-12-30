@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
@@ -22,4 +24,23 @@ func (r *Repository) CreateUser(ctx context.Context, user *model.User) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) GetUser(ctx context.Context, username string) (*model.User, error) {
+	query := `SELECT username, chat_id, notification_word_count, created FROM users WHERE username = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	user := &model.User{}
+
+	err := r.conn.GetContext(ctx, user, query, username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, model.ErrNotFound
+		}
+		return nil, fmt.Errorf("GetUser: %w", err)
+	}
+
+	return user, nil
 }
