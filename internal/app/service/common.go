@@ -3,10 +3,11 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
-	
+
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
@@ -50,7 +51,7 @@ func parseTime(text string) (time.Time, error) {
 	return res, nil
 }
 
-func (s *Service) getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
+func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
 	goodData := &model.CallbackData{
 		WordID:    wordID,
 		ChatID:    chatID,
@@ -81,4 +82,35 @@ func (s *Service) getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarku
 	}
 
 	return key
+}
+
+func buildWordMessage(word *model.Word) string {
+	builder := strings.Builder{}
+	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, word.Word))
+	builder.WriteRune('\n')
+	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, word.TranslatedWord))
+	if len(word.Example) > 0 {
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, word.Example))
+	}
+	if len(word.TranslatedExample) > 0 {
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, word.TranslatedExample))
+	}
+	return builder.String()
+}
+
+func (s *Service) SendWithKeyboard(text string, wordID, chatID int) error {
+	resp, err := s.tgClient.Send(chatID, text, true)
+	if err != nil {
+		return err
+	}
+
+	key := getKeyTG(wordID, chatID, resp.Result.MessageId)
+	err = s.tgClient.Edit(text, chatID, resp.Result.MessageId, true, key)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
