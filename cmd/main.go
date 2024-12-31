@@ -36,8 +36,12 @@ func initApp(ctx context.Context) error {
 	srv := service.New(repo, tgCli)
 
 	srv.RunTelegramProcessor(ctx)
-	logger.Info(ctx, "init app success")
+	logger.Info(ctx, "init telegram processor")
 
+	srv.RunNotification(ctx)
+	logger.Info(ctx, "init notification job")
+
+	// TODO: Сделать грейсфул шд
 	ch := make(chan os.Signal, 1)
 	<-ch
 

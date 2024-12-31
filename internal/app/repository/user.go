@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/lib/pq"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
@@ -43,4 +44,20 @@ func (r *Repository) GetUser(ctx context.Context, username string) (*model.User,
 	}
 
 	return user, nil
+}
+
+func (r *Repository) GetUsers(ctx context.Context, usernames []string) ([]*model.User, error) {
+	query := `SELECT username, chat_id, notification_word_count, created FROM users WHERE username = ANY($1)`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	users := make([]*model.User, 0)
+
+	err := r.conn.SelectContext(ctx, &users, query, pq.Array(usernames))
+	if err != nil {
+		return nil, fmt.Errorf("GetUsers: %w", err)
+	}
+
+	return users, nil
 }

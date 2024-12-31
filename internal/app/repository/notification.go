@@ -45,3 +45,20 @@ func (r *Repository) AddNotificationTime(ctx context.Context, username string, t
 
 	return nil
 }
+
+func (r *Repository) GetUsernamesByTime(ctx context.Context, t time.Time) ([]string, error) {
+	query := `SELECT username FROM notification_times WHERE time = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	strTime := fmt.Sprintf("%d:%d:00", t.Hour(), t.Minute())
+	usernames := make([]string, 0)
+
+	err := r.conn.SelectContext(ctx, &usernames, query, strTime)
+	if err != nil {
+		return nil, fmt.Errorf("GetUsernamesByTime: %w", err)
+	}
+
+	return usernames, nil
+}
