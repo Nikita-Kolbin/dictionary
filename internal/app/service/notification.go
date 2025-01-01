@@ -14,7 +14,8 @@ func (s *Service) RunNotification(ctx context.Context) {
 		currMinute := time.Now().Minute()
 		for {
 			time.Sleep(time.Second)
-			now := time.Now()
+			loc, _ := time.LoadLocation("Europe/Moscow")
+			now := time.Now().In(loc)
 			nowMinute := now.Minute()
 			if nowMinute == currMinute {
 				continue
