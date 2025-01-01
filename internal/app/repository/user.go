@@ -61,3 +61,20 @@ func (r *Repository) GetUsers(ctx context.Context, usernames []string) ([]*model
 
 	return users, nil
 }
+
+func (r *Repository) SetWordsCount(ctx context.Context, username string, count int) error {
+	query := `UPDATE users SET notification_word_count = $1 WHERE username = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	res, err := r.conn.ExecContext(ctx, query, count, username)
+	if err != nil {
+		return fmt.Errorf("SetWordsCount: %w", err)
+	}
+	if cnt, _ := res.RowsAffected(); cnt == 0 {
+		return model.ErrNotFound
+	}
+
+	return nil
+}

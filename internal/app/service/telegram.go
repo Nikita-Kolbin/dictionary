@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -57,17 +58,28 @@ func (s *Service) processCommand(ctx context.Context, msg *model.Message) {
 
 	var err error
 	switch command {
+
 	case model.HelpCMD:
 		_, err = s.tgClient.Send(chatID, model.HelpMSG, false)
 	case model.StartCMD:
 		_, err = s.tgClient.Send(chatID, s.createUserTG(ctx, msg), false)
+
 	case model.AddCMD:
 		_, err = s.tgClient.Send(chatID, s.addWordTG(ctx, msg, arg), false)
 	case model.GetCMD:
 		text, wordID := s.getOneWordTG(ctx, msg.From.Username)
 		err = s.SendWithKeyboard(text, wordID, chatID)
+
 	case model.AddTimeCMD:
 		_, err = s.tgClient.Send(chatID, s.addNotificationTimeTG(ctx, msg, arg), false)
+	case model.GetTimeCMD:
+		_, err = s.tgClient.Send(chatID, s.getNotificationTimeTG(ctx, msg), false)
+	case model.DelTimeCMD:
+		_, err = s.tgClient.Send(chatID, s.delNotificationTimeTG(ctx, msg, arg), false)
+
+	case model.SetCountCMD:
+		_, err = s.tgClient.Send(chatID, s.setWordCountTG(ctx, msg, arg), false)
+
 	default:
 		_, err = s.tgClient.Send(chatID, model.UnknownCommandMSG, false)
 	}
@@ -96,8 +108,18 @@ func (s *Service) processCallback(ctx context.Context, cb *model.CallbackQuery) 
 		postfix = "\n" + model.BadButton
 	}
 
-	text := cb.Message.Text + postfix
-	err := s.tgClient.Edit(text, data.ChatID, data.MessageID, true, nil)
+	word, err := s.repo.GetWordById(ctx, data.WordID)
+	if err != nil {
+		logger.Error(ctx, "can't get word by id", "err", err, "id", data.WordID)
+	}
+	var text string
+	if word == nil {
+		text = cb.Message.Text + postfix
+	} else {
+		text = buildWordMessage(word) + postfix
+	}
+
+	err = s.tgClient.Edit(text, data.ChatID, data.MessageID, true, nil)
 	if err != nil {
 		logger.Error(ctx, "can't, edit message", "err", err)
 	}
@@ -167,6 +189,41 @@ func (s *Service) addNotificationTimeTG(ctx context.Context, msg *model.Message,
 	return fmt.Sprintf(model.AddTimeSuccessMSG, arg)
 }
 
+func (s *Service) getNotificationTimeTG(ctx context.Context, msg *model.Message) string {
+	times, err := s.repo.GetNotificationTimes(ctx, msg.From.Username)
+	if err != nil {
+		logger.Error(ctx, "can't get notification time", "err", err, "user", msg.From.Username)
+		return model.GetTimeErrorMSG
+	}
+	if len(times) == 0 {
+		return model.GetTimeEmptyMSG
+	}
+
+	logger.Error(ctx, "notification time given", "user", msg.From.Username)
+	return buildNotificationTimeMessage(times)
+}
+
+func (s *Service) delNotificationTimeTG(ctx context.Context, msg *model.Message, arg string) string {
+	arg = strings.TrimSpace(arg)
+
+	t, err := parseTime(arg)
+	if err != nil {
+		return model.DelTimeEmptyMSG
+	}
+
+	err = s.repo.DelNotificationTime(ctx, msg.From.Username, t)
+	if err != nil {
+		logger.Error(ctx, "can't delete notification time", "err", err, "time", arg, "user", msg.From.Username)
+		if errors.Is(err, model.ErrNotFound) {
+			return model.DelTimeEmptyMSG
+		}
+		return model.DelTimeErrorMSG
+	}
+
+	logger.Error(ctx, "notification time deleted", "time", arg, "user", msg.From.Username)
+	return fmt.Sprintf(model.DelTimeSuccessMSG, arg)
+}
+
 func (s *Service) getOneWordTG(ctx context.Context, username string) (string, int) {
 	word, err := s.repo.GetWordsForNotification(ctx, username, 1)
 	if err != nil {
@@ -177,4 +234,28 @@ func (s *Service) getOneWordTG(ctx context.Context, username string) (string, in
 		return model.GetUserHaveNotWordsMSG, 0
 	}
 	return buildWordMessage(word[0]), word[0].ID
+}
+
+func (s *Service) setWordCountTG(ctx context.Context, msg *model.Message, arg string) string {
+	arg = strings.TrimSpace(arg)
+
+	cnt, err := strconv.Atoi(arg)
+	if err != nil {
+		return model.SetCountEmptyMSG
+	}
+	if cnt <= 0 || cnt > 25 {
+		return model.SetCountEmptyMSG
+	}
+
+	err = s.repo.SetWordsCount(ctx, msg.From.Username, cnt)
+	if err != nil {
+		logger.Error(ctx, "can't set word count", "err", err, "count", cnt, "user", msg.From.Username)
+		if errors.Is(err, model.ErrNotFound) {
+			return model.SetCountUserNotFoundMSG
+		}
+		return model.SetCountErrorMSG
+	}
+
+	logger.Error(ctx, "word count set", "count", cnt, "user", msg.From.Username)
+	return fmt.Sprintf(model.SetCountSuccessMSG, cnt)
 }

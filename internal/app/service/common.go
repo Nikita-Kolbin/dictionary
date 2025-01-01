@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -97,6 +98,31 @@ func buildWordMessage(word *model.Word) string {
 		builder.WriteRune('\n')
 		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, word.TranslatedExample))
 	}
+
+	query := url.Values{}
+	query.Add("sl", "eng")
+	query.Add("tl", "rus")
+	query.Add("text", word.Word)
+	translatorURL := url.URL{
+		Scheme:   "https",
+		Host:     "www.reverso.net",
+		Path:     "перевод-текста",
+		Fragment: query.Encode(),
+	}
+	builder.WriteRune('\n')
+	builder.WriteString(fmt.Sprintf(model.GetSuccessOpenInTranslator, translatorURL.String()))
+
+	return builder.String()
+}
+
+func buildNotificationTimeMessage(times []time.Time) string {
+	builder := strings.Builder{}
+	builder.WriteString(model.GetTimeSuccessMSG)
+	for _, t := range times {
+		builder.WriteRune('\n')
+		strTime := fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
+		builder.WriteString(strTime)
+	}
 	return builder.String()
 }
 
@@ -106,10 +132,12 @@ func (s *Service) SendWithKeyboard(text string, wordID, chatID int) error {
 		return err
 	}
 
-	key := getKeyTG(wordID, chatID, resp.Result.MessageId)
-	err = s.tgClient.Edit(text, chatID, resp.Result.MessageId, true, key)
-	if err != nil {
-		return err
+	if wordID > 0 && chatID > 0 && resp.Result.MessageId > 0 {
+		key := getKeyTG(wordID, chatID, resp.Result.MessageId)
+		err = s.tgClient.Edit(text, chatID, resp.Result.MessageId, true, key)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

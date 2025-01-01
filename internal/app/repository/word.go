@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
@@ -31,6 +33,26 @@ func (r *Repository) CreateWord(ctx context.Context, word *model.Word) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) GetWordById(ctx context.Context, id int) (*model.Word, error) {
+	query := `
+	SELECT id, word, translated_word, example, translated_example, last_correct_answer
+	FROM words WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	word := &model.Word{}
+	err := r.conn.GetContext(ctx, word, query, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, model.ErrNotFound
+		}
+		return nil, fmt.Errorf("GetWordById: %w", err)
+	}
+
+	return word, nil
 }
 
 func (r *Repository) GetWordsForNotification(ctx context.Context, username string, limit int) ([]*model.Word, error) {

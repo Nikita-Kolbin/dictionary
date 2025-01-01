@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 	"time"
+
+	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
 func (r *Repository) GetNotificationTimes(ctx context.Context, username string) ([]time.Time, error) {
-	query := `SELECT time FROM notification_times WHERE username = $1`
+	query := `SELECT time FROM notification_times WHERE username = $1 ORDER BY time`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
@@ -41,6 +42,23 @@ func (r *Repository) AddNotificationTime(ctx context.Context, username string, t
 			return fmt.Errorf("AddNotificationTimes: %w", model.ErrAlreadyExists)
 		}
 		return fmt.Errorf("AddNotificationTimes: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) DelNotificationTime(ctx context.Context, username string, t time.Time) error {
+	query := `DELETE FROM notification_times WHERE username = $1 AND time = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	res, err := r.conn.ExecContext(ctx, query, username, t)
+	if err != nil {
+		return fmt.Errorf("DelNotificationTime: %w", err)
+	}
+	if cnt, _ := res.RowsAffected(); cnt == 0 {
+		return fmt.Errorf("DelNotificationTime: %w", model.ErrNotFound)
 	}
 
 	return nil

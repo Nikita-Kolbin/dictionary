@@ -20,8 +20,18 @@ const (
 Возвращает одно слово на отгад
 
 /add_time <time>
-Добавить время для рассылки в формате 16:00
-Не более 3 раз за день`
+Добавить время для рассылки в формате 16:00 (по МСК)
+Не более 3 раз за день
+
+/get_time
+Возвращает время на которое у вас стоит рассылка
+
+/del_time <time>
+Удаляет время рассылки
+
+/set_count <count>
+Установить сколько слов будет в рассылке
+count - целое число от 1 до 25`
 
 	AddCMD              = `/add`
 	AddSuccessMSG       = `Слово "%s" добавленно!`
@@ -34,15 +44,32 @@ const (
 	GetSuccessTranslateMSG        = `Перевод: ||%s||`
 	GetSuccessExampleMSG          = `Пример: ||%s||`
 	GetSuccessExampleTranslateMSG = `Перевод: ||%s||`
+	GetSuccessOpenInTranslator    = `[Переводчик](%s)`
 	GetErrorMSG                   = `Не удалось получить слово`
 	GetUserHaveNotWordsMSG        = `У вас нет сохраненных слов`
 
 	AddTimeCMD              = `/add_time`
 	AddTimeSuccessMSG       = `Добавленно время для рассылки - %s`
 	AddTimeAlreadyExistsMSG = `Это время и так указано`
-	AddTimeEmptyMSG         = `Время не указано или указано не верно`
-	AddTimeLimitMSG         = `Уже указано максимальное кол-во рассылок, сначала удалите одну через /del`
+	AddTimeEmptyMSG         = `Время не указано или указано неверно`
+	AddTimeLimitMSG         = `Уже указано максимальное кол-во рассылок, сначала удалите одну через /del_time`
 	AddTimeErrorMSG         = `Не удалось добавить время`
+
+	GetTimeCMD        = `/get_time`
+	GetTimeSuccessMSG = `Время рассылки (по МСК):`
+	GetTimeEmptyMSG   = `У вас не установленно время рассылки`
+	GetTimeErrorMSG   = `Ошибка получения времени рассылки`
+
+	DelTimeCMD        = `/del_time`
+	DelTimeSuccessMSG = `Время рассылки %s удалено`
+	DelTimeEmptyMSG   = `У вас и так нет рассылки на это время`
+	DelTimeErrorMSG   = `Ошибка удаления времени рассылки`
+
+	SetCountCMD             = `/set_count`
+	SetCountSuccessMSG      = `Установленно кол-во слов для рассылки: %d`
+	SetCountEmptyMSG        = `Кол-во не указано или указано неверно`
+	SetCountUserNotFoundMSG = `Пользователь не найден, используйте /start для обновления базы`
+	SetCountErrorMSG        = `Ошибка установки кол-ва слов для рассылки`
 )
 
 type UpdatesResponse struct {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
@@ -11,8 +12,15 @@ func (s *Service) CreateWord(ctx context.Context, word *model.Word) error {
 }
 
 func (s *Service) GetWordsForNotification(ctx context.Context, username string) ([]*model.Word, error) {
-	// TODO: достать из юзера
+	user, err := s.repo.GetUser(ctx, username)
+	if err != nil {
+		logger.Error(ctx, "can't get user", "err", err, "username", username)
+	}
+
 	limit := 10
+	if user != nil {
+		limit = user.NotificationWordCount
+	}
 
 	return s.repo.GetWordsForNotification(ctx, username, limit)
 }
