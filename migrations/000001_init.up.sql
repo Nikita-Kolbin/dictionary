@@ -2,8 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL,
     chat_id BIGINT NOT NULL,
     notification_word_count SMALLINT NOT NULL DEFAULT 10,
-    created TIMESTAMP NOT NULL DEFAULT NOW(),
-    CHECK (NOTIFICATION_WORD_COUNT BETWEEN 1 AND 25)
+    created TIMESTAMP NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS
     users_username_uidx ON users (username);

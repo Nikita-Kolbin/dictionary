@@ -19,7 +19,8 @@ const (
 	editMessageMethod = "editMessageText"
 	getUpdatesMethod  = "getUpdates"
 
-	parseMode = "MarkdownV2"
+	parseMode      = "MarkdownV2"
+	disablePreview = `{"is_disabled": true}`
 )
 
 type TGClient struct {
@@ -62,6 +63,7 @@ func (c *TGClient) Send(chatID int, msg string, withFormat bool) (*model.Respons
 
 	if withFormat {
 		q.Add("parse_mode", parseMode)
+		q.Add("link_preview_options", disablePreview)
 	}
 
 	byteResp, err := c.doRequest(sendMessageMethod, q)
@@ -85,6 +87,7 @@ func (c *TGClient) Edit(msg string, chatID, msgID int, withFormat bool, key *mod
 
 	if withFormat {
 		q.Add("parse_mode", parseMode)
+		q.Add("link_preview_options", disablePreview)
 	}
 
 	if key != nil {

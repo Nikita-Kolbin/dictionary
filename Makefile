@@ -15,6 +15,9 @@ compose_rebuild:
 	docker compose --env-file ./env/.env up -d --build --force-recreate
 
 compose_migrate:
-	docker compose --env-file ./env/.env -p dictionary up -d migrate
+	docker compose --env-file ./env/.env -p dictionary up -d migrate --build --force-recreate
+
+compose_backend:
+	docker compose --env-file ./env/.env -p dictionary up -d backend --build --force-recreate
 
 # migrate create -ext sql -dir ./migrations -seq <name>
