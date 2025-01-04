@@ -4,7 +4,7 @@ const (
 	GoodButton = `Good ✅`
 	BadButton  = `Bad ❌`
 
-	UnknownCommandMSG = `Неизвестная команда /help`
+	UnknownCommandMSG = `Неизвестная команда, постморите /help`
 
 	StartCMD = `/start`
 	StartMSG = `Привет, инфа /help`
@@ -126,5 +126,5 @@ type Response struct {
 }
 
 type Result struct {
-	MessageId int `json:"message_id"`
+	MessageID int `json:"message_id"`
 }

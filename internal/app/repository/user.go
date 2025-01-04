@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/lib/pq"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/lib/pq"
 )
 
 func (r *Repository) CreateUser(ctx context.Context, user *model.User) error {

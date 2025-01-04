@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
 func (s *Service) CreateWord(ctx context.Context, word *model.Word) error {
@@ -23,4 +23,23 @@ func (s *Service) GetWordsForNotification(ctx context.Context, username string) 
 	}
 
 	return s.repo.GetWordsForNotification(ctx, username, limit)
+}
+
+func (s *Service) GetOneWord(ctx context.Context, username string) (*model.Word, error) {
+	words, err := s.repo.GetWordsForNotification(ctx, username, 1)
+	if err != nil {
+		return nil, err
+	}
+	if len(words) == 0 {
+		return nil, nil
+	}
+	return words[0], nil
+}
+
+func (s *Service) AddCorrectAnswerToWord(ctx context.Context, id int) error {
+	return s.repo.AddCorrectAnswerToWord(ctx, id)
+}
+
+func (s *Service) GetWordByID(ctx context.Context, id int) (*model.Word, error) {
+	return s.repo.GetWordByID(ctx, id)
 }
