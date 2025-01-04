@@ -161,7 +161,7 @@ func (s *Service) addWordTG(ctx context.Context, msg *model.Message, arg string)
 		return model.AddErrorMSG
 	}
 
-	logger.Error(ctx, "word created", "word", w, "user", msg.From.Username)
+	logger.Info(ctx, "word created", "word", w, "user", msg.From.Username)
 	return fmt.Sprintf(model.AddSuccessMSG, w)
 }
 
