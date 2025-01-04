@@ -35,7 +35,7 @@ func (r *Repository) CreateWord(ctx context.Context, word *model.Word) error {
 	return nil
 }
 
-func (r *Repository) GetWordById(ctx context.Context, id int) (*model.Word, error) {
+func (r *Repository) GetWordByID(ctx context.Context, id int) (*model.Word, error) {
 	query := `
 	SELECT id, word, translated_word, example, translated_example, last_correct_answer
 	FROM words WHERE id = $1`
@@ -49,7 +49,7 @@ func (r *Repository) GetWordById(ctx context.Context, id int) (*model.Word, erro
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, model.ErrNotFound
 		}
-		return nil, fmt.Errorf("GetWordById: %w", err)
+		return nil, fmt.Errorf("GetWordByID: %w", err)
 	}
 
 	return word, nil

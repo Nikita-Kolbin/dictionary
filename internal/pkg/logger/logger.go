@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"runtime"
+	"strings"
 )
 
 var (
@@ -13,9 +15,17 @@ var (
 )
 
 func Error(ctx context.Context, msg string, args ...any) {
+	args = append(args, funcName())
 	logger.ErrorContext(ctx, msg, args...)
 }
 
 func Info(ctx context.Context, msg string, args ...any) {
+	args = append(args, funcName())
 	logger.InfoContext(ctx, msg, args...)
+}
+
+func funcName() slog.Attr {
+	pc, _, _, _ := runtime.Caller(2)
+	name := strings.Split(runtime.FuncForPC(pc).Name(), "/")
+	return slog.String("func", name[len(name)-1])
 }

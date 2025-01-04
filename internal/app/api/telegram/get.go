@@ -1,48 +1,33 @@
-package service
+package telegram
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
-func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
-	goodData := &model.CallbackData{
-		WordID:    wordID,
-		ChatID:    chatID,
-		MessageID: msgID,
-		Correct:   true,
+func (t *Telegram) getOneWordTG(ctx context.Context, username string) (string, int) {
+	word, err := t.srv.GetOneWord(ctx, username)
+	if err != nil {
+		logger.Error(ctx, "can't get one word:", "user", username, "err", err)
+		return model.GetErrorMSG, 0
 	}
-	badData := &model.CallbackData{
-		WordID:    wordID,
-		ChatID:    chatID,
-		MessageID: msgID,
-		Correct:   false,
+	if word == nil {
+		return model.GetUserHaveNotWordsMSG, 0
 	}
-
-	good, _ := json.Marshal(goodData)
-	bad, _ := json.Marshal(badData)
-
-	key := &model.InlineKeyboardMarkup{
-		InlineKeyboard: [][]*model.InlineKeyboardButton{{
-			{
-				Text:         model.GoodButton,
-				CallbackData: string(good),
-			},
-			{
-				Text:         model.BadButton,
-				CallbackData: string(bad),
-			},
-		}},
-	}
-
-	return key
+	logger.Info(ctx, "word given:", "user", username, "word", word.Word)
+	return buildWordMessage(word), word.ID
 }
 
 func buildWordMessage(word *model.Word) string {
+	if word == nil {
+		return ""
+	}
+
 	builder := strings.Builder{}
 	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, word.Word))
 	builder.WriteRune('\n')

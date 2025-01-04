@@ -14,7 +14,7 @@ type repository interface {
 	SetWordsCount(ctx context.Context, username string, count int) error
 
 	CreateWord(ctx context.Context, word *model.Word) error
-	GetWordById(ctx context.Context, id int) (*model.Word, error)
+	GetWordByID(ctx context.Context, id int) (*model.Word, error)
 	GetWordsForNotification(ctx context.Context, username string, limit int) ([]*model.Word, error)
 	AddCorrectAnswerToWord(ctx context.Context, id int) error
 

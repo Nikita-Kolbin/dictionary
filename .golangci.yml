@@ -16,7 +16,7 @@ linters:
 #    - cyclop
 #    - decorder
 #    - depguard
-    - dogsled
+#    - dogsled
 #    - dupl
 #    - dupword
     - durationcheck

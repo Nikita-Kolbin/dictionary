@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	telegramAPI "github.com/Nikita-Kolbin/dictionary/internal/app/api/telegram"
 	"github.com/Nikita-Kolbin/dictionary/internal/app/config"
 	"github.com/Nikita-Kolbin/dictionary/internal/app/repository"
 	"github.com/Nikita-Kolbin/dictionary/internal/app/service"
@@ -35,11 +36,12 @@ func initApp(ctx context.Context) error {
 
 	srv := service.New(repo, tgCli)
 
-	srv.RunTelegramProcessor(ctx)
-	logger.Info(ctx, "init telegram processor")
-
 	srv.RunNotification(ctx)
 	logger.Info(ctx, "init notification job")
+
+	tgAPI := telegramAPI.New(srv)
+	tgAPI.RunTelegramProcessor(ctx)
+	logger.Info(ctx, "init telegram processor")
 
 	// TODO: Сделать грейсфул шд
 	ch := make(chan os.Signal, 1)

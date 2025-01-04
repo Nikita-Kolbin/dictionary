@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 	"time"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
 func (s *Service) RunNotification(ctx context.Context) {
@@ -21,18 +21,19 @@ func (s *Service) RunNotification(ctx context.Context) {
 				continue
 			}
 
+			// Получение юзеров с уведами на это время
 			usernames, err := s.repo.GetUsernamesByTime(ctx, now)
 			if err != nil {
 				logger.Error(ctx, "can't, get usernames for notification", "err", err)
 				continue
 			}
-
 			users, err := s.repo.GetUsers(ctx, usernames)
 			if err != nil {
 				logger.Error(ctx, "can't, get users for notification", "err", err)
 				continue
 			}
 
+			// Получение и рассылка слов
 			for _, user := range users {
 				words, err := s.repo.GetWordsForNotification(ctx, user.Username, user.NotificationWordCount)
 				if err != nil {
@@ -65,4 +66,12 @@ func (s *Service) AddNotificationTime(ctx context.Context, username string, t ti
 	}
 
 	return s.repo.AddNotificationTime(ctx, username, t)
+}
+
+func (s *Service) GetNotificationTimes(ctx context.Context, username string) ([]time.Time, error) {
+	return s.repo.GetNotificationTimes(ctx, username)
+}
+
+func (s *Service) DelNotificationTime(ctx context.Context, username string, t time.Time) error {
+	return s.repo.DelNotificationTime(ctx, username, t)
 }
