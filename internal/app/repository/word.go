@@ -79,7 +79,7 @@ func (r *Repository) GetWordsForNotification(ctx context.Context, username strin
 	       (correct_answer_count - COALESCE(CURRENT_DATE - last_correct_answer::date, 0)) AS koef
 	FROM words
 	WHERE username = $1
-	ORDER BY koef, random()
+	ORDER BY koef, RANDOM()
 	LIMIT $2`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
@@ -117,7 +117,8 @@ func (r *Repository) GetAllUserWords(ctx context.Context, username string) ([]*m
 	SELECT id, word, translated_word, example, translated_example, 
 	       correct_answer_count, last_correct_answer, created
 	FROM words
-	WHERE username = $1`
+	WHERE username = $1
+	ORDER BY id`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
