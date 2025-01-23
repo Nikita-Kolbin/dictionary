@@ -36,7 +36,7 @@ func (t *Telegram) processUpdates(ctx context.Context) {
 	}
 }
 
-func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) {
+func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //nolint
 	chatID := msg.Chat.ID
 
 	if msg.Text == "" || msg.Text[0] != '/' {
@@ -63,6 +63,9 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) {
 	case model.GetCMD:
 		text, wordID := t.getOneWordTG(ctx, msg.From.Username)
 		err = t.srv.SendWithKeyboard(text, wordID, chatID)
+	case model.DelCMD:
+		text := t.delWordTG(ctx, msg, arg)
+		_, err = t.srv.Send(chatID, text, false)
 
 	case model.AddTimeCMD:
 		text := t.addNotificationTimeTG(ctx, msg, arg)
@@ -76,6 +79,15 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) {
 
 	case model.SetCountCMD:
 		_, err = t.srv.Send(chatID, t.setWordCountTG(ctx, msg, arg), false)
+
+	case model.BackupCMD:
+		var filePath, text string
+		filePath, text = t.backupTG(ctx, msg)
+		if len(filePath) > 0 {
+			_, err = t.srv.SendWithDocument(chatID, filePath)
+		} else {
+			_, err = t.srv.Send(chatID, text, false)
+		}
 
 	default:
 		_, err = t.srv.Send(chatID, model.UnknownCommandMSG, false)

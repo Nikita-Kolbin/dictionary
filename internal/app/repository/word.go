@@ -55,6 +55,23 @@ func (r *Repository) GetWordByID(ctx context.Context, id int) (*model.Word, erro
 	return word, nil
 }
 
+func (r *Repository) DeleteWord(ctx context.Context, word, username string) error {
+	query := `DELETE FROM words WHERE word = $1 AND username = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	res, err := r.conn.ExecContext(ctx, query, word, username)
+	if err != nil {
+		return fmt.Errorf("DeleteWord: %w", err)
+	}
+	if cnt, _ := res.RowsAffected(); cnt == 0 {
+		return fmt.Errorf("DeleteWord: %w", model.ErrNotFound)
+	}
+
+	return nil
+}
+
 func (r *Repository) GetWordsForNotification(ctx context.Context, username string, limit int) ([]*model.Word, error) {
 	// TODO: подумать насчет коефа
 	query := `
@@ -62,7 +79,7 @@ func (r *Repository) GetWordsForNotification(ctx context.Context, username strin
 	       (correct_answer_count - COALESCE(CURRENT_DATE - last_correct_answer::date, 0)) AS koef
 	FROM words
 	WHERE username = $1
-	ORDER BY koef
+	ORDER BY koef, random()
 	LIMIT $2`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
@@ -93,4 +110,23 @@ func (r *Repository) AddCorrectAnswerToWord(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) GetAllUserWords(ctx context.Context, username string) ([]*model.Word, error) {
+	query := `
+	SELECT id, word, translated_word, example, translated_example, 
+	       correct_answer_count, last_correct_answer, created
+	FROM words
+	WHERE username = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	words := make([]*model.Word, 0)
+	err := r.conn.SelectContext(ctx, &words, query, username)
+	if err != nil {
+		return nil, fmt.Errorf("GetAllUserWords: %w", err)
+	}
+
+	return words, nil
 }

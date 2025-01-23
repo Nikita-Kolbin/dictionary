@@ -1,12 +1,16 @@
 package telegram
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
@@ -15,9 +19,10 @@ import (
 const (
 	tgBotHost = "api.telegram.org"
 
-	sendMessageMethod = "sendMessage"
-	editMessageMethod = "editMessageText"
-	getUpdatesMethod  = "getUpdates"
+	sendMessageMethod  = "sendMessage"
+	editMessageMethod  = "editMessageText"
+	getUpdatesMethod   = "getUpdates"
+	sendDocumentMethod = "sendDocument"
 
 	parseMode      = "MarkdownV2"
 	disablePreview = `{"is_disabled": true}`
@@ -67,6 +72,23 @@ func (c *TGClient) Send(chatID int, msg string, withFormat bool) (*model.Respons
 	}
 
 	byteResp, err := c.doRequest(sendMessageMethod, q)
+	if err != nil {
+		return nil, fmt.Errorf("can't send message: %w", err)
+	}
+
+	resp := &model.Response{}
+	if err := json.Unmarshal(byteResp, resp); err != nil {
+		return nil, fmt.Errorf("can't parse response: %w", err)
+	}
+
+	return resp, nil
+}
+
+func (c *TGClient) SendDocument(chatID int, filePath string) (*model.Response, error) {
+	q := url.Values{}
+	q.Add("chat_id", strconv.Itoa(chatID))
+
+	byteResp, err := c.doRequestWithDocument(sendDocumentMethod, q, filePath)
 	if err != nil {
 		return nil, fmt.Errorf("can't send message: %w", err)
 	}
@@ -130,8 +152,67 @@ func (c *TGClient) doRequest(method string, query url.Values) ([]byte, error) {
 		return nil, fmt.Errorf("can't do request: %w", err)
 	}
 
-	strBody := string(body)
-	_ = strBody
+	return body, nil
+}
+
+func (c *TGClient) doRequestWithDocument(method string, query url.Values, filePath string) ([]byte, error) {
+	u := url.URL{
+		Scheme:   "https",
+		Host:     c.host,
+		Path:     path.Join(c.basePath, method),
+		RawQuery: query.Encode(),
+	}
+
+	// Открываем файл
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("can't open file: %w", err)
+	}
+	defer func() { _ = file.Close() }()
+
+	// Создаем буфер для данных запроса
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	// Добавляем файл в форму
+	fileName := filepath.Base(filePath)
+	part, err := writer.CreateFormFile("document", fileName)
+	if err != nil {
+		return nil, fmt.Errorf("can't add file to form: %w", err)
+	}
+
+	// Копируем содержимое файла в форму
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, fmt.Errorf("can't copy file to form: %w", err)
+	}
+
+	// Завершаем запись в тело запроса
+	err = writer.Close()
+	if err != nil {
+		return nil, fmt.Errorf("can't close form writer: %w", err)
+	}
+
+	// Создаем новый HTTP-запрос
+	req, err := http.NewRequest(http.MethodPost, u.String(), &requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("can't create request: %w", err)
+	}
+
+	// Устанавливаем заголовок Content-Type
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// Отправляем запрос
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("can't do request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("can't do request: %w", err)
+	}
 
 	return body, nil
 }

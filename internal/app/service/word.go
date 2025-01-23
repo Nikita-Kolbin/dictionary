@@ -43,3 +43,7 @@ func (s *Service) AddCorrectAnswerToWord(ctx context.Context, id int) error {
 func (s *Service) GetWordByID(ctx context.Context, id int) (*model.Word, error) {
 	return s.repo.GetWordByID(ctx, id)
 }
+
+func (s *Service) DeleteWord(ctx context.Context, word, username string) error {
+	return s.repo.DeleteWord(ctx, word, username)
+}
