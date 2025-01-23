@@ -28,7 +28,9 @@ func (r *Repository) CreateUser(ctx context.Context, user *model.User) error {
 }
 
 func (r *Repository) GetUser(ctx context.Context, username string) (*model.User, error) {
-	query := `SELECT username, chat_id, notification_word_count, created FROM users WHERE username = $1`
+	query := `
+	SELECT username, chat_id, notification_word_count, created, last_backup
+	FROM users WHERE username = $1`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
@@ -74,6 +76,21 @@ func (r *Repository) SetWordsCount(ctx context.Context, username string, count i
 	}
 	if cnt, _ := res.RowsAffected(); cnt == 0 {
 		return model.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateUserLastBackup(ctx context.Context, username string) error {
+	query := `
+	UPDATE users SET last_backup = NOW() WHERE username = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	_, err := r.conn.ExecContext(ctx, query, username)
+	if err != nil {
+		return fmt.Errorf("UpdateUserLastBackup: %w", err)
 	}
 
 	return nil

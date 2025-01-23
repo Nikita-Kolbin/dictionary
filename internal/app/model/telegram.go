@@ -19,6 +19,9 @@ const (
 /get
 Возвращает одно слово на отгад
 
+/del <word>
+Удалить слово
+
 /add_time <time>
 Добавить время для рассылки в формате 16:00 (по МСК)
 Не более 3 раз за день
@@ -31,7 +34,10 @@ const (
 
 /set_count <count>
 Установить сколько слов будет в рассылке
-count - целое число от 1 до 25`
+count - целое число от 1 до 25
+
+/backup
+Выгрузить все свои слова (лимит 1 раз в день)`
 
 	AddCMD              = `/add`
 	AddSuccessMSG       = `Слово "%s" добавленно!`
@@ -47,6 +53,11 @@ count - целое число от 1 до 25`
 	GetSuccessOpenInTranslator    = `[Переводчик](%s)`
 	GetErrorMSG                   = `Не удалось получить слово`
 	GetUserHaveNotWordsMSG        = `У вас нет сохраненных слов`
+
+	DelCMD        = `/del`
+	DelSuccessMSG = `Слово "%s" удалено`
+	DelEmptyMSG   = `У вас и так нет этого слова`
+	DelErrorMSG   = `Ошибка удаления слова`
 
 	AddTimeCMD              = `/add_time`
 	AddTimeSuccessMSG       = `Добавленно время для рассылки - %s`
@@ -70,6 +81,10 @@ count - целое число от 1 до 25`
 	SetCountEmptyMSG        = `Кол-во не указано или указано неверно`
 	SetCountUserNotFoundMSG = `Пользователь не найден, используйте /start для обновления базы`
 	SetCountErrorMSG        = `Ошибка установки кол-ва слов для рассылки`
+
+	BackupCMD      = `/backup`
+	BackupLimit    = `Нельза загрузить бэкап чаще, чем раз в день`
+	BackupErrorMSG = `Ошибка выгрузки бэкапа`
 )
 
 type UpdatesResponse struct {

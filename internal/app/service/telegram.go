@@ -38,3 +38,7 @@ func (s *Service) SendWithKeyboard(text string, wordID, chatID int) error {
 func (s *Service) Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error {
 	return s.tgClient.Edit(msg, chatID, msgID, withFormat, key)
 }
+
+func (s *Service) SendWithDocument(chatID int, filePath string) (*model.Response, error) {
+	return s.tgClient.SendDocument(chatID, filePath)
+}

@@ -14,9 +14,11 @@ compose_rebuild:
 	docker compose down -v
 	docker compose --env-file ./env/.env up -d --build --force-recreate
 
+# Накатить миграции
 compose_migrate:
 	docker compose --env-file ./env/.env -p dictionary up -d migrate --build --force-recreate
 
+# Перебилдить бэк
 compose_backend:
 	docker compose --env-file ./env/.env -p dictionary up -d backend --build --force-recreate
 

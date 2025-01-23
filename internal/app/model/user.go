@@ -7,4 +7,5 @@ type User struct {
 	ChatID                int       `db:"chat_id"`
 	NotificationWordCount int       `db:"notification_word_count"`
 	Created               time.Time `db:"created"`
+	LastBackup            time.Time `db:"last_backup"`
 }
