@@ -29,16 +29,16 @@ func buildWordMessage(word *model.Word) string {
 	}
 
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, word.Word))
+	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, escapeFormatChars(word.Word)))
 	builder.WriteRune('\n')
-	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, word.TranslatedWord))
+	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, escapeFormatChars(word.TranslatedWord)))
 	if len(word.Example) > 0 {
 		builder.WriteRune('\n')
-		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, word.Example))
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, escapeFormatChars(word.Example)))
 	}
 	if len(word.TranslatedExample) > 0 {
 		builder.WriteRune('\n')
-		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, word.TranslatedExample))
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, escapeFormatChars(word.TranslatedExample)))
 	}
 
 	query := url.Values{}
