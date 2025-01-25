@@ -1,0 +1,5 @@
+ALTER TABLE IF EXISTS words
+ALTER COLUMN last_correct_answer DROP DEFAULT;
+
+ALTER TABLE IF EXISTS words
+ALTER COLUMN last_correct_answer DROP NOT NULL;
