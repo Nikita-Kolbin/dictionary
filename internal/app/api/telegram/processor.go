@@ -124,7 +124,7 @@ func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery)
 	if word == nil {
 		text = cb.Message.Text + postfix
 	} else {
-		text = buildWordMessage(word) + postfix
+		text = t.srv.BuildWordMessage(word) + postfix
 	}
 
 	err = t.srv.Edit(text, data.ChatID, data.MessageID, true, nil)

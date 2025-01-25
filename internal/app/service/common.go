@@ -9,6 +9,11 @@ import (
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
+var needEscapedChars = map[rune]struct{}{
+	'_': {}, '*': {}, '[': {}, ']': {}, '(': {}, ')': {}, '~': {}, '`': {}, '>': {},
+	'#': {}, '+': {}, '-': {}, '=': {}, '|': {}, '{': {}, '}': {}, '.': {}, '!': {},
+}
+
 func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
 	goodData := &model.CallbackData{
 		WordID:    wordID,
@@ -42,18 +47,18 @@ func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
 	return key
 }
 
-func buildWordMessage(word *model.Word) string {
+func (s *Service) BuildWordMessage(word *model.Word) string {
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, word.Word))
+	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, escapeFormatChars(word.Word)))
 	builder.WriteRune('\n')
-	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, word.TranslatedWord))
+	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, escapeFormatChars(word.TranslatedWord)))
 	if len(word.Example) > 0 {
 		builder.WriteRune('\n')
-		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, word.Example))
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, escapeFormatChars(word.Example)))
 	}
 	if len(word.TranslatedExample) > 0 {
 		builder.WriteRune('\n')
-		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, word.TranslatedExample))
+		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleTranslateMSG, escapeFormatChars(word.TranslatedExample)))
 	}
 
 	query := url.Values{}
@@ -69,5 +74,17 @@ func buildWordMessage(word *model.Word) string {
 	builder.WriteRune('\n')
 	builder.WriteString(fmt.Sprintf(model.GetSuccessOpenInTranslator, translatorURL.String()))
 
+	return builder.String()
+}
+
+func escapeFormatChars(msg string) string {
+	builder := strings.Builder{}
+	runes := []rune(msg)
+	for _, r := range runes {
+		if _, ok := needEscapedChars[r]; ok {
+			builder.WriteRune('\\')
+		}
+		builder.WriteRune(r)
+	}
 	return builder.String()
 }

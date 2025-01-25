@@ -42,8 +42,8 @@ func (s *Service) RunNotification(ctx context.Context) {
 				}
 				go func(wordsCopy []*model.Word) {
 					for _, word := range wordsCopy {
-						time.Sleep(300 * time.Millisecond)
-						text := buildWordMessage(word)
+						time.Sleep(100 * time.Millisecond)
+						text := s.BuildWordMessage(word)
 						err = s.SendWithKeyboard(text, word.ID, user.ChatID)
 						if err != nil {
 							logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)

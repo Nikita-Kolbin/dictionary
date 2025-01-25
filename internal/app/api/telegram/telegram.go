@@ -16,6 +16,7 @@ type service interface {
 
 	CreateUser(ctx context.Context, user *model.User) error
 	SetWordsCount(ctx context.Context, username string, count int) error
+	BuildWordMessage(word *model.Word) string
 
 	CreateWord(ctx context.Context, word *model.Word) error
 	GetOneWord(ctx context.Context, username string) (*model.Word, error)
