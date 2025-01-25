@@ -40,14 +40,17 @@ func (s *Service) RunNotification(ctx context.Context) {
 					logger.Error(ctx, "can't, get words for notification", "err", err, "user", user)
 					continue
 				}
-				for _, word := range words {
-					text := buildWordMessage(word)
-					err = s.SendWithKeyboard(text, word.ID, user.ChatID)
-					if err != nil {
-						logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
-						continue
+				go func(wordsCopy []*model.Word) {
+					for _, word := range wordsCopy {
+						time.Sleep(300 * time.Millisecond)
+						text := buildWordMessage(word)
+						err = s.SendWithKeyboard(text, word.ID, user.ChatID)
+						if err != nil {
+							logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
+							continue
+						}
 					}
-				}
+				}(words)
 			}
 
 			currMinute = now.Minute()
