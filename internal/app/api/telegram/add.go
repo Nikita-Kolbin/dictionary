@@ -39,7 +39,7 @@ func (t *Telegram) addWordTG(ctx context.Context, msg *model.Message, arg string
 
 func parseWord(text string) (word, trWord, example, trExample string) {
 	// TODO: Добавить разделителей
-	sp := strings.Split(text, ",")
+	sp := strings.Split(text, ";")
 
 	if len(sp) > 0 {
 		word = strings.TrimSpace(sp[0])
