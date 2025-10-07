@@ -12,7 +12,7 @@ const (
 	HelpCMD = `/help`
 	HelpMSG = `Список команд:
 
-/add <word>, <translate>, <example>, <translate>
+/add <word>; <translate>; <example>; <translate>
 Обязательно указать слово и перевод, разделитель - точка с запятой
 пример и перевод примера оптимальные параметры
 

@@ -2,3 +2,4 @@
 *.env
 /env
 /temp
+.DS_Store
