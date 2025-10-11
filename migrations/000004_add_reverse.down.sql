@@ -1,0 +1,5 @@
+ALTER TABLE IF EXISTS users
+DROP COLUMN IF EXISTS reverse_enabled;
+
+ALTER TABLE IF EXISTS words
+DROP COLUMN IF EXISTS last_answer_is_original;

@@ -12,6 +12,7 @@ type repository interface {
 	GetUser(ctx context.Context, username string) (*model.User, error)
 	GetUsers(ctx context.Context, usernames []string) ([]*model.User, error)
 	SetWordsCount(ctx context.Context, username string, count int) error
+	SetReverseEnabled(ctx context.Context, username string, enable bool) error
 
 	CreateWord(ctx context.Context, word *model.Word) error
 	GetWordByID(ctx context.Context, id int) (*model.Word, error)

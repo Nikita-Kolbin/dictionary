@@ -36,6 +36,12 @@ const (
 Установить сколько слов будет в рассылке
 count - целое число от 1 до 25
 
+/enable_reverse
+Установить чередование языков
+
+/disable_reverse
+Отключить чередование языков
+
 /backup
 Выгрузить все свои слова (лимит 1 раз в день)`
 
@@ -47,7 +53,9 @@ count - целое число от 1 до 25
 
 	GetCMD                        = `/get`
 	GetSuccessWordMSG             = `Слово: %s`
-	GetSuccessTranslateMSG        = `Перевод: ||%s||`
+	GetSuccessWordHiddenMSG       = `Слово: ||%s||`
+	GetSuccessTranslateMSG        = `Перевод: %s`
+	GetSuccessTranslateHiddenMSG  = `Перевод: ||%s||`
 	GetSuccessExampleMSG          = `Пример: ||%s||`
 	GetSuccessExampleTranslateMSG = `Перевод: ||%s||`
 	GetSuccessOpenInTranslator    = `[Переводчик](%s)`
@@ -81,6 +89,14 @@ count - целое число от 1 до 25
 	SetCountEmptyMSG        = `Кол-во не указано или указано неверно`
 	SetCountUserNotFoundMSG = `Пользователь не найден, используйте /start для обновления базы`
 	SetCountErrorMSG        = `Ошибка установки кол-ва слов для рассылки`
+
+	EnableReverseCMD        = `/enable_reverse`
+	EnableReverseSuccessMSG = `Чередование языка установленно`
+	EnableReverseErrorMSG   = `Ошибка установки чередования языка`
+
+	DisableReverseCMD        = `/disable_reverse`
+	DisableReverseSuccessMSG = `Чередование языка отключено`
+	DisableReverseErrorMSG   = `Ошибка отключения чередования языка`
 
 	BackupCMD      = `/backup`
 	BackupLimit    = `Нельза загрузить бэкап чаще, чем раз в день`
@@ -129,10 +145,11 @@ type CallbackQuery struct {
 }
 
 type CallbackData struct {
-	MessageID int  `json:"mid"`
-	WordID    int  `json:"wid"`
-	ChatID    int  `json:"cid"`
-	Correct   bool `json:"c"`
+	MessageID  int  `json:"mid"`
+	WordID     int  `json:"wid"`
+	ChatID     int  `json:"cid"`
+	Correct    bool `json:"c"`
+	WasReverse bool `json:"vr"`
 }
 
 type Response struct {

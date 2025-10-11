@@ -44,7 +44,7 @@ func (s *Service) RunNotification(ctx context.Context) {
 					for _, word := range wordsCopy {
 						time.Sleep(100 * time.Millisecond)
 						text := s.BuildWordMessage(word)
-						err = s.SendWithKeyboard(text, word.ID, user.ChatID)
+						err = s.SendWithKeyboard(text, word.ID, user.ChatID, word.NeedReverseLang)
 						if err != nil {
 							logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
 							continue

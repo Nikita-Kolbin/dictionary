@@ -18,14 +18,14 @@ func (s *Service) Send(chatID int, message string, withFormat bool) (*model.Resp
 	return s.tgClient.Send(chatID, message, withFormat)
 }
 
-func (s *Service) SendWithKeyboard(text string, wordID, chatID int) error {
+func (s *Service) SendWithKeyboard(text string, wordID, chatID int, reverse bool) error {
 	resp, err := s.tgClient.Send(chatID, text, true)
 	if err != nil {
 		return err
 	}
 
 	if wordID > 0 && chatID > 0 && resp.Result.MessageID > 0 {
-		key := getKeyTG(wordID, chatID, resp.Result.MessageID)
+		key := getKeyTG(wordID, chatID, resp.Result.MessageID, reverse)
 		err = s.tgClient.Edit(text, chatID, resp.Result.MessageID, true, key)
 		if err != nil {
 			return err
