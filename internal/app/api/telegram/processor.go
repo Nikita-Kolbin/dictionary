@@ -61,8 +61,8 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 	case model.AddCMD:
 		_, err = t.srv.Send(chatID, t.addWordTG(ctx, msg, arg), false)
 	case model.GetCMD:
-		text, wordID := t.getOneWordTG(ctx, msg.From.Username)
-		err = t.srv.SendWithKeyboard(text, wordID, chatID)
+		text, word := t.getOneWordTG(ctx, msg.From.Username)
+		err = t.srv.SendWithKeyboard(text, word.ID, chatID, word.NeedReverseLang)
 	case model.DelCMD:
 		text := t.delWordTG(ctx, msg, arg)
 		_, err = t.srv.Send(chatID, text, false)
@@ -79,6 +79,11 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 
 	case model.SetCountCMD:
 		_, err = t.srv.Send(chatID, t.setWordCountTG(ctx, msg, arg), false)
+
+	case model.EnableReverseCMD:
+		_, err = t.srv.Send(chatID, t.enableReverseTG(ctx, msg.From.Username), false)
+	case model.DisableReverseCMD:
+		_, err = t.srv.Send(chatID, t.disableReverseTG(ctx, msg.From.Username), false)
 
 	case model.BackupCMD:
 		var filePath, text string
@@ -124,6 +129,7 @@ func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery)
 	if word == nil {
 		text = cb.Message.Text + postfix
 	} else {
+		word.NeedReverseLang = data.WasReverse
 		text = t.srv.BuildWordMessage(word) + postfix
 	}
 

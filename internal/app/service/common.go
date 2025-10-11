@@ -14,18 +14,20 @@ var needEscapedChars = map[rune]struct{}{
 	'#': {}, '+': {}, '-': {}, '=': {}, '|': {}, '{': {}, '}': {}, '.': {}, '!': {},
 }
 
-func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
+func getKeyTG(wordID, chatID, msgID int, reverse bool) *model.InlineKeyboardMarkup {
 	goodData := &model.CallbackData{
-		WordID:    wordID,
-		ChatID:    chatID,
-		MessageID: msgID,
-		Correct:   true,
+		WordID:     wordID,
+		ChatID:     chatID,
+		MessageID:  msgID,
+		Correct:    true,
+		WasReverse: reverse,
 	}
 	badData := &model.CallbackData{
-		WordID:    wordID,
-		ChatID:    chatID,
-		MessageID: msgID,
-		Correct:   false,
+		WordID:     wordID,
+		ChatID:     chatID,
+		MessageID:  msgID,
+		Correct:    false,
+		WasReverse: reverse,
 	}
 
 	good, _ := json.Marshal(goodData)
@@ -49,9 +51,17 @@ func getKeyTG(wordID, chatID, msgID int) *model.InlineKeyboardMarkup {
 
 func (s *Service) BuildWordMessage(word *model.Word) string {
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, escapeFormatChars(word.Word)))
-	builder.WriteRune('\n')
-	builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, escapeFormatChars(word.TranslatedWord)))
+
+	if !word.NeedReverseLang {
+		builder.WriteString(fmt.Sprintf(model.GetSuccessWordMSG, escapeFormatChars(word.Word)))
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateHiddenMSG, escapeFormatChars(word.TranslatedWord)))
+	} else {
+		builder.WriteString(fmt.Sprintf(model.GetSuccessWordHiddenMSG, escapeFormatChars(word.Word)))
+		builder.WriteRune('\n')
+		builder.WriteString(fmt.Sprintf(model.GetSuccessTranslateMSG, escapeFormatChars(word.TranslatedWord)))
+	}
+
 	if len(word.Example) > 0 {
 		builder.WriteRune('\n')
 		builder.WriteString(fmt.Sprintf(model.GetSuccessExampleMSG, escapeFormatChars(word.Example)))

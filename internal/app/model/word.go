@@ -12,5 +12,7 @@ type Word struct {
 	CorrectAnswerCount int        `db:"correct_answer_count"`
 	LastCorrectAnswer  *time.Time `db:"last_correct_answer"`
 	Created            time.Time  `db:"created"`
-	Koef               int        `db:"koef"`
+
+	Koef            int  `db:"koef"`
+	NeedReverseLang bool `db:"need_reverse_lang"`
 }

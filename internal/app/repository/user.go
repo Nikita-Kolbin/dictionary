@@ -95,3 +95,20 @@ func (r *Repository) UpdateUserLastBackup(ctx context.Context, username string) 
 
 	return nil
 }
+
+func (r *Repository) SetReverseEnabled(ctx context.Context, username string, enable bool) error {
+	query := `UPDATE users SET reverse_enabled = $1 WHERE username = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	res, err := r.conn.ExecContext(ctx, query, enable, username)
+	if err != nil {
+		return fmt.Errorf("SetReverseEnabled: %w", err)
+	}
+	if cnt, _ := res.RowsAffected(); cnt == 0 {
+		return model.ErrNotFound
+	}
+
+	return nil
+}

@@ -13,3 +13,7 @@ func (s *Service) CreateUser(ctx context.Context, user *model.User) error {
 func (s *Service) SetWordsCount(ctx context.Context, username string, count int) error {
 	return s.repo.SetWordsCount(ctx, username, count)
 }
+
+func (s *Service) SetReverseEnabled(ctx context.Context, username string, enable bool) error {
+	return s.repo.SetReverseEnabled(ctx, username, enable)
+}

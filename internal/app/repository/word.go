@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
@@ -76,11 +77,14 @@ func (r *Repository) GetWordsForNotification(ctx context.Context, username strin
 	// TODO: подумать насчет коефа
 	query := `
 	SELECT id, word, translated_word, example, translated_example, last_correct_answer,
-	       (correct_answer_count - COALESCE(CURRENT_DATE - last_correct_answer::date, 0)) AS koef
+		(correct_answer_count - COALESCE(CURRENT_DATE - last_correct_answer::date, 0)) AS koef,
+		((SELECT reverse_enabled FROM users WHERE username = $1) AND last_answer_is_original) AS need_reverse_lang
 	FROM words
 	WHERE username = $1
 	ORDER BY koef, RANDOM()
 	LIMIT $2`
+
+	querySetLastLang := `UPDATE words SET last_answer_is_original = $1 WHERE id = any($2)`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
@@ -89,6 +93,32 @@ func (r *Repository) GetWordsForNotification(ctx context.Context, username strin
 	err := r.conn.SelectContext(ctx, &words, query, username, limit)
 	if err != nil {
 		return nil, fmt.Errorf("GetWordsForNotification: %w", err)
+	}
+
+	reverseLangList := make([]int, 0)
+	originLangList := make([]int, 0)
+	for _, word := range words {
+		if word.NeedReverseLang {
+			reverseLangList = append(reverseLangList, word.ID)
+		} else {
+			originLangList = append(originLangList, word.ID)
+		}
+	}
+
+	// Русские слова
+	if len(reverseLangList) != 0 {
+		_, err = r.conn.ExecContext(ctx, querySetLastLang, false, reverseLangList)
+		if err != nil {
+			logger.Error(ctx, "GetWordsForNotification: can't change last answer language", err)
+		}
+	}
+
+	// Английские слова
+	if len(originLangList) != 0 {
+		_, err = r.conn.ExecContext(ctx, querySetLastLang, true, originLangList)
+		if err != nil {
+			logger.Error(ctx, "GetWordsForNotification: can't change last answer language", err)
+		}
 	}
 
 	return words, nil
