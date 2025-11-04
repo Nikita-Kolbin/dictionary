@@ -1,6 +1,9 @@
 lint:
 	golangci-lint run ./...
 
+test:
+	go test -v ./...
+
 compose_up:
 	docker compose --env-file ./env/.env up -d
 
