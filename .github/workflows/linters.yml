@@ -20,4 +20,3 @@ jobs:
         with:
           version: v2.1.1
           args: --timeout=5m
-        continue-on-error: true

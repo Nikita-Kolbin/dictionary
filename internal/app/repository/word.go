@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
