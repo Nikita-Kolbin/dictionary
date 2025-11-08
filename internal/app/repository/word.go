@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
 func (r *Repository) CreateWord(ctx context.Context, word *model.Word) error {
