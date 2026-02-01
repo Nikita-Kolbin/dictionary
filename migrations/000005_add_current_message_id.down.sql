@@ -1,0 +1,5 @@
+ALTER TABLE IF EXISTS words
+DROP COLUMN IF EXISTS current_message_id;
+
+ALTER TABLE IF EXISTS words
+DROP COLUMN IF EXISTS last_send_date;
