@@ -4,12 +4,16 @@ services:
     build: ./
     env_file: ./env/.env
     ports:
-      - 8082:8082
+      - "8082:8082"
     networks:
       - backend_nw
     depends_on:
       postgresql:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
   postgresql:
     image: postgres:16
@@ -38,8 +42,60 @@ services:
       postgresql:
         condition: service_healthy
 
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    ports:
+      - "9080:9080"
+    networks:
+      - backend_nw
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    privileged: true
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - backend_nw
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/local-config.yml
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - backend_nw
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - backend_nw
+    environment:
+      # TODO: вынести в енвы
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./config/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - grafanadata:/var/lib/grafana
+
 volumes:
   postgresql: {}
+  grafanadata: {}
+  prometheusdata: {}
 
 networks:
   backend_nw: {}

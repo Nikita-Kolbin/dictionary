@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"encoding/json"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/metrics"
 	"strings"
 	"time"
 
@@ -24,6 +25,8 @@ func (t *Telegram) processUpdates(ctx context.Context) {
 	if err != nil {
 		logger.Error(ctx, "can't, get updates", "err", err)
 	}
+
+	metrics.CountTelegramMessages.Add(float64(len(updates)))
 
 	for _, u := range updates {
 		if u.Message != nil {
@@ -99,6 +102,7 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 	}
 
 	if err != nil {
+		metrics.CountErrorResponses.Inc()
 		logger.Error(ctx, "can't, send message", "err", err)
 	}
 }

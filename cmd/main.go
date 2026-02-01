@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/httpserver"
 	"os"
 
 	telegramAPI "github.com/Nikita-Kolbin/dictionary/internal/app/api/telegram"
@@ -42,6 +43,9 @@ func initApp(ctx context.Context) error {
 	tgAPI := telegramAPI.New(srv)
 	tgAPI.RunTelegramProcessor(ctx)
 	logger.Info(ctx, "init telegram processor")
+
+	httpSrv := httpserver.New(&cfg.Listener)
+	httpSrv.Run(ctx)
 
 	// TODO: Сделать грейсфул шд
 	ch := make(chan os.Signal, 1)
