@@ -11,55 +11,61 @@ import (
 
 func (s *Service) RunNotification(ctx context.Context) {
 	// Джоба для отправки слов по расписанию
-	go func() {
-		currMinute := time.Now().Minute()
-		for {
-			time.Sleep(time.Second)
-			loc, _ := time.LoadLocation("Europe/Moscow")
-			now := time.Now().In(loc)
-			nowMinute := now.Minute()
-			if nowMinute == currMinute {
-				continue
-			}
-
-			// Получение юзеров с уведами на это время
-			usernames, err := s.repo.GetUsernamesByTime(ctx, now)
-			if err != nil {
-				logger.Error(ctx, "can't, get usernames for notification", "err", err)
-				continue
-			}
-			users, err := s.repo.GetUsers(ctx, usernames)
-			if err != nil {
-				logger.Error(ctx, "can't, get users for notification", "err", err)
-				continue
-			}
-
-			// Получение и рассылка слов
-			for _, user := range users {
-				words, err := s.repo.GetWordsForNotification(ctx, user.Username, user.NotificationWordCount)
-				if err != nil {
-					logger.Error(ctx, "can't, get words for notification", "err", err, "user", user)
-					continue
-				}
-				go func(wordsCopy []*model.Word) {
-					for _, word := range wordsCopy {
-						time.Sleep(100 * time.Millisecond)
-						text := s.BuildWordMessage(word)
-						err = s.SendWithKeyboard(ctx, text, word.ID, user.ChatID, word.NeedReverseLang)
-						if err != nil {
-							logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
-							continue
-						}
-					}
-				}(words)
-			}
-
-			currMinute = now.Minute()
-		}
-	}()
+	go s.sendMessagesJob(ctx)
 
 	// Джоба для закрытия старых слов
-	go func() {
+	go s.autoCloseOldWordsJob(ctx)
+}
+
+func (s *Service) sendMessagesJob(ctx context.Context) {
+	currMinute := time.Now().Minute()
+	for {
+		time.Sleep(time.Second)
+		loc, _ := time.LoadLocation("Europe/Moscow")
+		now := time.Now().In(loc)
+		nowMinute := now.Minute()
+		if nowMinute == currMinute {
+			continue
+		}
+
+		// Получение юзеров с уведами на это время
+		usernames, err := s.repo.GetUsernamesByTime(ctx, now)
+		if err != nil {
+			logger.Error(ctx, "can't, get usernames for notification", "err", err)
+			continue
+		}
+		users, err := s.repo.GetUsers(ctx, usernames)
+		if err != nil {
+			logger.Error(ctx, "can't, get users for notification", "err", err)
+			continue
+		}
+
+		// Получение и рассылка слов
+		for _, user := range users {
+			words, err := s.repo.GetWordsForNotification(ctx, user.Username, user.NotificationWordCount)
+			if err != nil {
+				logger.Error(ctx, "can't, get words for notification", "err", err, "user", user)
+				continue
+			}
+			go func(wordsCopy []*model.Word) {
+				for _, word := range wordsCopy {
+					time.Sleep(100 * time.Millisecond)
+					text := s.BuildWordMessage(word)
+					err = s.SendWithKeyboard(ctx, text, word.ID, user.ChatID, word.NeedReverseLang)
+					if err != nil {
+						logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
+						continue
+					}
+				}
+			}(words)
+		}
+
+		currMinute = now.Minute()
+	}
+}
+
+func (s *Service) autoCloseOldWordsJob(ctx context.Context) {
+	for {
 		words, err := s.repo.GetOldSendWords(ctx)
 		if err != nil {
 			logger.Error(ctx, "can't, get old send words", "err", err)
@@ -90,7 +96,7 @@ func (s *Service) RunNotification(ctx context.Context) {
 		}
 
 		time.Sleep(time.Hour)
-	}()
+	}
 }
 
 func (s *Service) AddNotificationTime(ctx context.Context, username string, t time.Time) error {
