@@ -21,6 +21,8 @@ type repository interface {
 	AddCorrectAnswerToWord(ctx context.Context, id int) error
 	GetAllUserWords(ctx context.Context, username string) ([]*model.Word, error)
 	UpdateUserLastBackup(ctx context.Context, username string) error
+	UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error
+	GetOldSendWords(ctx context.Context) ([]*model.Word, error)
 
 	GetNotificationTimes(ctx context.Context, username string) ([]time.Time, error)
 	AddNotificationTime(ctx context.Context, username string, t time.Time) error

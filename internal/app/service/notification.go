@@ -10,6 +10,7 @@ import (
 )
 
 func (s *Service) RunNotification(ctx context.Context) {
+	// Джоба для отправки слов по расписанию
 	go func() {
 		currMinute := time.Now().Minute()
 		for {
@@ -44,7 +45,7 @@ func (s *Service) RunNotification(ctx context.Context) {
 					for _, word := range wordsCopy {
 						time.Sleep(100 * time.Millisecond)
 						text := s.BuildWordMessage(word)
-						err = s.SendWithKeyboard(text, word.ID, user.ChatID, word.NeedReverseLang)
+						err = s.SendWithKeyboard(ctx, text, word.ID, user.ChatID, word.NeedReverseLang)
 						if err != nil {
 							logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
 							continue
@@ -55,6 +56,40 @@ func (s *Service) RunNotification(ctx context.Context) {
 
 			currMinute = now.Minute()
 		}
+	}()
+
+	// Джоба для закрытия старых слов
+	go func() {
+		words, err := s.repo.GetOldSendWords(ctx)
+		if err != nil {
+			logger.Error(ctx, "can't, get old send words", "err", err)
+		}
+
+		// TODO: мб распараллелить
+		for _, word := range words {
+			text := s.BuildWordMessage(word)
+			text += "\n" + model.BadButton
+
+			if word.CurrentMsgID == nil {
+				continue
+			}
+
+			err = s.Edit(text, word.ChatID, *word.CurrentMsgID, true, nil)
+			if err != nil {
+				logger.Error(ctx, "can't, edit message", "err", err)
+				continue
+			}
+
+			err = s.UpdateWordCurrentMessageID(ctx, word.ID, nil)
+			if err != nil {
+				logger.Error(ctx, "can't, update word current message", "err", err)
+				continue
+			}
+
+			logger.Info(ctx, "word auto close successful", "word_id", word.ID)
+		}
+
+		time.Sleep(time.Hour)
 	}()
 }
 

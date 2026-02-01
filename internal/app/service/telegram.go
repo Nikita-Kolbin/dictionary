@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
@@ -18,8 +19,17 @@ func (s *Service) Send(chatID int, message string, withFormat bool) (*model.Resp
 	return s.tgClient.Send(chatID, message, withFormat)
 }
 
-func (s *Service) SendWithKeyboard(text string, wordID, chatID int, reverse bool) error {
+func (s *Service) UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error {
+	return s.repo.UpdateWordCurrentMessageID(ctx, wordID, msgID)
+}
+
+func (s *Service) SendWithKeyboard(ctx context.Context, text string, wordID, chatID int, reverse bool) error {
 	resp, err := s.tgClient.Send(chatID, text, true)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.UpdateWordCurrentMessageID(ctx, wordID, &resp.Result.MessageID)
 	if err != nil {
 		return err
 	}

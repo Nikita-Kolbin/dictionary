@@ -15,4 +15,7 @@ type Word struct {
 
 	Koef            int  `db:"koef"`
 	NeedReverseLang bool `db:"need_reverse_lang"`
+
+	CurrentMsgID *int `db:"current_message_id"`
+	ChatID       int  `db:"chat_id"`
 }
