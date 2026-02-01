@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
+	"time"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 
 func (r *Repository) CreateWord(ctx context.Context, word *model.Word) error {
@@ -80,11 +81,14 @@ func (r *Repository) GetWordsForNotification(ctx context.Context, username strin
 		(correct_answer_count - COALESCE(CURRENT_DATE - last_correct_answer::date, 0)) AS koef,
 		((SELECT reverse_enabled FROM users WHERE username = $1) AND last_answer_is_original) AS need_reverse_lang
 	FROM words
-	WHERE username = $1
+	WHERE username = $1 AND current_message_id IS NULL
 	ORDER BY koef, RANDOM()
 	LIMIT $2`
 
-	querySetLastLang := `UPDATE words SET last_answer_is_original = $1 WHERE id = any($2)`
+	querySetLastLang := `
+	UPDATE words 
+	SET last_answer_is_original = $1, last_send_date = now() 
+	WHERE id = any($2)`
 
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	defer cancel()
@@ -157,6 +161,44 @@ func (r *Repository) GetAllUserWords(ctx context.Context, username string) ([]*m
 	err := r.conn.SelectContext(ctx, &words, query, username)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllUserWords: %w", err)
+	}
+
+	return words, nil
+}
+
+func (r *Repository) UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error {
+	query := `UPDATE words SET current_message_id = $1 WHERE id = $2`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	_, err := r.conn.ExecContext(ctx, query, msgID, wordID)
+	if err != nil {
+		return fmt.Errorf("UpdateWordCurrentMessageID: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) GetOldSendWords(ctx context.Context) ([]*model.Word, error) {
+	const wordTTL = time.Hour * 24
+
+	query := `
+	SELECT w.id, w.word, w.translated_word, w.example, 
+	       w.translated_example, w.correct_answer_count, 
+	       w.last_correct_answer, w.created, 
+	       w.current_message_id, u.chat_id
+	FROM words as w
+	JOIN users as u ON u.username = w.username
+	WHERE current_message_id IS NOT NULL AND now() - w.last_send_date > $1`
+
+	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	defer cancel()
+
+	words := make([]*model.Word, 0)
+	err := r.conn.SelectContext(ctx, &words, query, wordTTL)
+	if err != nil {
+		return nil, fmt.Errorf("GetOldOpenedWords: %w", err)
 	}
 
 	return words, nil

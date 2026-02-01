@@ -1,7 +1,8 @@
+version: "2"
+
 linters:
   # Disable all linters.
-  # Default: false
-  disable-all: true
+  default: none
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
@@ -33,7 +34,6 @@ linters:
 #    - forbidigo
 #    - forcetypeassert
     - funlen
-    - gci
 #    - ginkgolinter
     - gocheckcompilerdirectives
 #    - gochecknoglobals
@@ -45,15 +45,12 @@ linters:
     - gocyclo
 #    - godot
 #    - godox
-    - gofmt
-    - gofumpt
 #    - goheader
 #    - goimports
 #    - gomoddirectives
 #    - gomodguard
     - goprintffuncname
 #    - gosec
-    - gosimple
 #    - gosmopolitan
     - govet
     - grouper
@@ -89,7 +86,7 @@ linters:
 #    - protogetter
 #    - reassign
 #    - recvcheck
-    - revive
+#    - revive
     - rowserrcheck
 #    - sloglint
 #    - spancheck
@@ -98,7 +95,6 @@ linters:
 #    - stylecheck
 #    - tagalign
 #    - tagliatelle
-    - tenv
 #    - testableexamples
 #    - testifylint
 #    - testpackage
@@ -114,3 +110,9 @@ linters:
 #    - wrapcheck
 #    - wsl
 #    - zerologlint
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt

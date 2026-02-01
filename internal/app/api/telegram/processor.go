@@ -62,7 +62,7 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 		_, err = t.srv.Send(chatID, t.addWordTG(ctx, msg, arg), false)
 	case model.GetCMD:
 		text, word := t.getOneWordTG(ctx, msg.From.Username)
-		err = t.srv.SendWithKeyboard(text, word.ID, chatID, word.NeedReverseLang)
+		err = t.srv.SendWithKeyboard(ctx, text, word.ID, chatID, word.NeedReverseLang)
 	case model.DelCMD:
 		text := t.delWordTG(ctx, msg, arg)
 		_, err = t.srv.Send(chatID, text, false)
@@ -136,5 +136,10 @@ func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery)
 	err = t.srv.Edit(text, data.ChatID, data.MessageID, true, nil)
 	if err != nil {
 		logger.Error(ctx, "can't, edit message", "err", err)
+	} else {
+		err = t.srv.UpdateWordCurrentMessageID(ctx, data.WordID, nil)
+		if err != nil {
+			logger.Error(ctx, "can't, update word current message", "err", err)
+		}
 	}
 }
