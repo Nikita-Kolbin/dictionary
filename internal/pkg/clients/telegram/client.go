@@ -61,15 +61,12 @@ func (c *TGClient) Updates(offset, limit int) ([]*model.Update, error) {
 	return resp.Result, nil
 }
 
-func (c *TGClient) Send(chatID int, msg string, withFormat bool) (*model.Response, error) {
+func (c *TGClient) Send(chatID int, msg string, options ...model.TelegramMessageOption) (*model.Response, error) {
 	q := url.Values{}
 	q.Add("chat_id", strconv.Itoa(chatID))
 	q.Add("text", msg)
 
-	if withFormat {
-		q.Add("parse_mode", parseMode)
-		q.Add("link_preview_options", disablePreview)
-	}
+	q = applyOptions(q, options)
 
 	byteResp, err := c.doRequest(sendMessageMethod, q)
 	if err != nil {
@@ -127,6 +124,19 @@ func (c *TGClient) Edit(msg string, chatID, msgID int, withFormat bool, key *mod
 	}
 
 	return nil
+}
+
+func applyOptions(values url.Values, options []model.TelegramMessageOption) url.Values {
+	for _, option := range options {
+		switch option {
+		case model.TelegramMessageOptionWithFormat:
+			values.Add("parse_mode", parseMode)
+			values.Add("link_preview_options", disablePreview)
+		case model.TelegramMessageOptionWithoutSound:
+			values.Add("disable_notification", strconv.FormatBool(true))
+		}
+	}
+	return values
 }
 
 func newBasePath(token string) string {

@@ -16,8 +16,8 @@ func (s *Service) Updates() ([]*model.Update, error) {
 	return updates, err
 }
 
-func (s *Service) Send(chatID int, message string, withFormat bool) (*model.Response, error) {
-	return s.tgClient.Send(chatID, message, withFormat)
+func (s *Service) Send(chatID int, message string, options ...model.TelegramMessageOption) (*model.Response, error) {
+	return s.tgClient.Send(chatID, message, options...)
 }
 
 func (s *Service) UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error {
@@ -25,7 +25,7 @@ func (s *Service) UpdateWordCurrentMessageID(ctx context.Context, wordID int, ms
 }
 
 func (s *Service) SendWithKeyboard(ctx context.Context, text string, wordID, chatID int, reverse bool) error {
-	resp, err := s.tgClient.Send(chatID, text, true)
+	resp, err := s.tgClient.Send(chatID, text, model.TelegramMessageOptionWithFormat, model.TelegramMessageOptionWithoutSound)
 	if err != nil {
 		return err
 	}

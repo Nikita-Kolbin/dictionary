@@ -32,7 +32,7 @@ type repository interface {
 
 type tgClient interface {
 	Updates(offset, limit int) ([]*model.Update, error)
-	Send(chatID int, msg string, withFormat bool) (*model.Response, error)
+	Send(chatID int, msg string, options ...model.TelegramMessageOption) (*model.Response, error)
 	Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error
 	SendDocument(chatID int, filePath string) (*model.Response, error)
 }

@@ -22,7 +22,7 @@ func (t *Telegram) RunTelegramProcessor(ctx context.Context) {
 func (t *Telegram) processUpdates(ctx context.Context) {
 	updates, err := t.srv.Updates()
 	if err != nil {
-		logger.Error(ctx, "can't, get updates", "err", err)
+		logger.Error(ctx, "can't get updates", "err", err)
 	}
 
 	for _, u := range updates {
@@ -40,9 +40,9 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 	chatID := msg.Chat.ID
 
 	if msg.Text == "" || msg.Text[0] != '/' {
-		_, err := t.srv.Send(chatID, model.UnknownCommandMSG, false)
+		_, err := t.srv.Send(chatID, model.UnknownCommandMSG)
 		if err != nil {
-			logger.Error(ctx, "can't, send message", "err", err)
+			logger.Error(ctx, "can't send message", "err", err)
 		}
 		return
 	}
@@ -53,37 +53,37 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 	var err error
 	switch command {
 	case model.HelpCMD:
-		_, err = t.srv.Send(chatID, model.HelpMSG, false)
+		_, err = t.srv.Send(chatID, model.HelpMSG)
 	case model.StartCMD:
 		text := t.createUserTG(ctx, msg)
-		_, err = t.srv.Send(chatID, text, false)
+		_, err = t.srv.Send(chatID, text)
 
 	case model.AddCMD:
-		_, err = t.srv.Send(chatID, t.addWordTG(ctx, msg, arg), false)
+		_, err = t.srv.Send(chatID, t.addWordTG(ctx, msg, arg))
 	case model.GetCMD:
 		text, word := t.getOneWordTG(ctx, msg.From.Username)
 		err = t.srv.SendWithKeyboard(ctx, text, word.ID, chatID, word.NeedReverseLang)
 	case model.DelCMD:
 		text := t.delWordTG(ctx, msg, arg)
-		_, err = t.srv.Send(chatID, text, false)
+		_, err = t.srv.Send(chatID, text)
 
 	case model.AddTimeCMD:
 		text := t.addNotificationTimeTG(ctx, msg, arg)
-		_, err = t.srv.Send(chatID, text, false)
+		_, err = t.srv.Send(chatID, text)
 	case model.GetTimeCMD:
 		text := t.getNotificationTimeTG(ctx, msg)
-		_, err = t.srv.Send(chatID, text, false)
+		_, err = t.srv.Send(chatID, text)
 	case model.DelTimeCMD:
 		text := t.delNotificationTimeTG(ctx, msg, arg)
-		_, err = t.srv.Send(chatID, text, false)
+		_, err = t.srv.Send(chatID, text)
 
 	case model.SetCountCMD:
-		_, err = t.srv.Send(chatID, t.setWordCountTG(ctx, msg, arg), false)
+		_, err = t.srv.Send(chatID, t.setWordCountTG(ctx, msg, arg))
 
 	case model.EnableReverseCMD:
-		_, err = t.srv.Send(chatID, t.enableReverseTG(ctx, msg.From.Username), false)
+		_, err = t.srv.Send(chatID, t.enableReverseTG(ctx, msg.From.Username))
 	case model.DisableReverseCMD:
-		_, err = t.srv.Send(chatID, t.disableReverseTG(ctx, msg.From.Username), false)
+		_, err = t.srv.Send(chatID, t.disableReverseTG(ctx, msg.From.Username))
 
 	case model.BackupCMD:
 		var filePath, text string
@@ -91,22 +91,22 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 		if len(filePath) > 0 {
 			_, err = t.srv.SendWithDocument(chatID, filePath)
 		} else {
-			_, err = t.srv.Send(chatID, text, false)
+			_, err = t.srv.Send(chatID, text)
 		}
 
 	default:
-		_, err = t.srv.Send(chatID, model.UnknownCommandMSG, false)
+		_, err = t.srv.Send(chatID, model.UnknownCommandMSG)
 	}
 
 	if err != nil {
-		logger.Error(ctx, "can't, send message", "err", err)
+		logger.Error(ctx, "can't send message", "err", err)
 	}
 }
 
 func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery) {
 	data := &model.CallbackData{}
 	if err := json.Unmarshal([]byte(cb.Data), data); err != nil {
-		logger.Error(ctx, "can't, unmarshal callback data", "err", err)
+		logger.Error(ctx, "can't unmarshal callback data", "err", err)
 		return
 	}
 
@@ -115,7 +115,7 @@ func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery)
 		postfix = "\n" + model.GoodButton
 		err := t.srv.AddCorrectAnswerToWord(ctx, data.WordID)
 		if err != nil {
-			logger.Error(ctx, "can't, add correct answer to word", "err", err, "id", data.WordID)
+			logger.Error(ctx, "can't add correct answer to word", "err", err, "id", data.WordID)
 		}
 	} else {
 		postfix = "\n" + model.BadButton
@@ -135,11 +135,11 @@ func (t *Telegram) processCallback(ctx context.Context, cb *model.CallbackQuery)
 
 	err = t.srv.Edit(text, data.ChatID, data.MessageID, true, nil)
 	if err != nil {
-		logger.Error(ctx, "can't, edit message", "err", err)
+		logger.Error(ctx, "can't edit message", "err", err)
 	} else {
 		err = t.srv.UpdateWordCurrentMessageID(ctx, data.WordID, nil)
 		if err != nil {
-			logger.Error(ctx, "can't, update word current message", "err", err)
+			logger.Error(ctx, "can't update word current message", "err", err)
 		}
 	}
 }

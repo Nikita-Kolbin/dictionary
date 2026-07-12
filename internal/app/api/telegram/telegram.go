@@ -9,7 +9,7 @@ import (
 
 type service interface {
 	Updates() ([]*model.Update, error)
-	Send(chatID int, message string, withFormat bool) (*model.Response, error)
+	Send(chatID int, message string, options ...model.TelegramMessageOption) (*model.Response, error)
 	SendWithKeyboard(ctx context.Context, text string, wordID, chatID int, reverse bool) error
 	Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error
 	SendWithDocument(chatID int, filePath string) (*model.Response, error)
