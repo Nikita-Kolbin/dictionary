@@ -101,6 +101,15 @@ count - целое число от 1 до 25
 	BackupCMD      = `/backup`
 	BackupLimit    = `Нельза загрузить бэкап чаще, чем раз в день`
 	BackupErrorMSG = `Ошибка выгрузки бэкапа`
+
+	NotificationMSG = `Hello everybody put your hands up!`
+)
+
+type TelegramMessageOption string
+
+const (
+	TelegramMessageOptionWithFormat   TelegramMessageOption = "with_format"
+	TelegramMessageOptionWithoutSound TelegramMessageOption = "without_sound"
 )
 
 type UpdatesResponse struct {

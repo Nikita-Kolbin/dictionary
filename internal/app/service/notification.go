@@ -31,29 +31,34 @@ func (s *Service) sendMessagesJob(ctx context.Context) {
 		// Получение юзеров с уведами на это время
 		usernames, err := s.repo.GetUsernamesByTime(ctx, now)
 		if err != nil {
-			logger.Error(ctx, "can't, get usernames for notification", "err", err)
+			logger.Error(ctx, "can't get usernames for notification", "err", err)
 			continue
 		}
 		users, err := s.repo.GetUsers(ctx, usernames)
 		if err != nil {
-			logger.Error(ctx, "can't, get users for notification", "err", err)
+			logger.Error(ctx, "can't get users for notification", "err", err)
 			continue
 		}
 
 		// Получение и рассылка слов
 		for _, user := range users {
+			_, err := s.Send(user.ChatID, model.NotificationMSG)
+			if err != nil {
+				logger.Error(ctx, "can't send first message with notification", "err", err, "user", user)
+			}
+
 			words, err := s.repo.GetWordsForNotification(ctx, user.Username, user.NotificationWordCount)
 			if err != nil {
-				logger.Error(ctx, "can't, get words for notification", "err", err, "user", user)
+				logger.Error(ctx, "can't get words for notification", "err", err, "user", user)
 				continue
 			}
 			go func(wordsCopy []*model.Word) {
 				for _, word := range wordsCopy {
 					time.Sleep(100 * time.Millisecond)
 					text := s.BuildWordMessage(word)
-					err = s.SendWithKeyboard(ctx, text, word.ID, user.ChatID, word.NeedReverseLang)
+					err := s.SendWithKeyboard(ctx, text, word.ID, user.ChatID, word.NeedReverseLang)
 					if err != nil {
-						logger.Error(ctx, "can't, send words for notification", "err", err, "user", user)
+						logger.Error(ctx, "can't send words for notification", "err", err, "user", user)
 						continue
 					}
 				}
@@ -68,7 +73,7 @@ func (s *Service) autoCloseOldWordsJob(ctx context.Context) {
 	for {
 		words, err := s.repo.GetOldSendWords(ctx)
 		if err != nil {
-			logger.Error(ctx, "can't, get old send words", "err", err)
+			logger.Error(ctx, "can't get old send words", "err", err)
 		}
 
 		// TODO: мб распараллелить
@@ -82,13 +87,13 @@ func (s *Service) autoCloseOldWordsJob(ctx context.Context) {
 
 			err = s.Edit(text, word.ChatID, *word.CurrentMsgID, true, nil)
 			if err != nil {
-				logger.Error(ctx, "can't, edit message", "err", err)
+				logger.Error(ctx, "can't edit message", "err", err)
 				continue
 			}
 
 			err = s.UpdateWordCurrentMessageID(ctx, word.ID, nil)
 			if err != nil {
-				logger.Error(ctx, "can't, update word current message", "err", err)
+				logger.Error(ctx, "can't update word current message", "err", err)
 				continue
 			}
 
