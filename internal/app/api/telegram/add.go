@@ -26,7 +26,7 @@ func (t *Telegram) addWordTG(ctx context.Context, msg *model.Message, arg string
 
 	err := t.srv.CreateWord(ctx, word)
 	if err != nil {
-		logger.Error(ctx, "can't, create word", "err", err, "word", w, "user", msg.From.Username)
+		logger.Error(ctx, "can't create word", "err", err, "word", w, "user", msg.From.Username)
 		if errors.Is(err, model.ErrAlreadyExists) {
 			return model.AddAlreadyExistsMSG
 		}

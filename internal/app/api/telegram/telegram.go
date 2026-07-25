@@ -9,8 +9,8 @@ import (
 
 type service interface {
 	Updates() ([]*model.Update, error)
-	Send(chatID int, message string, withFormat bool) (*model.Response, error)
-	SendWithKeyboard(text string, wordID, chatID int, reverse bool) error
+	Send(chatID int, message string, options ...model.TelegramMessageOption) (*model.Response, error)
+	SendWithKeyboard(ctx context.Context, text string, wordID, chatID int, reverse bool) error
 	Edit(msg string, chatID, msgID int, withFormat bool, key *model.InlineKeyboardMarkup) error
 	SendWithDocument(chatID int, filePath string) (*model.Response, error)
 
@@ -24,6 +24,7 @@ type service interface {
 	AddCorrectAnswerToWord(ctx context.Context, id int) error
 	GetWordByID(ctx context.Context, id int) (*model.Word, error)
 	BuildWordMessage(word *model.Word) string
+	UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error
 
 	AddNotificationTime(ctx context.Context, username string, t time.Time) error
 	GetNotificationTimes(ctx context.Context, username string) ([]time.Time, error)

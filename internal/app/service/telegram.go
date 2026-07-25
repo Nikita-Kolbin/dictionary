@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 )
 
@@ -14,12 +16,21 @@ func (s *Service) Updates() ([]*model.Update, error) {
 	return updates, err
 }
 
-func (s *Service) Send(chatID int, message string, withFormat bool) (*model.Response, error) {
-	return s.tgClient.Send(chatID, message, withFormat)
+func (s *Service) Send(chatID int, message string, options ...model.TelegramMessageOption) (*model.Response, error) {
+	return s.tgClient.Send(chatID, message, options...)
 }
 
-func (s *Service) SendWithKeyboard(text string, wordID, chatID int, reverse bool) error {
-	resp, err := s.tgClient.Send(chatID, text, true)
+func (s *Service) UpdateWordCurrentMessageID(ctx context.Context, wordID int, msgID *int) error {
+	return s.repo.UpdateWordCurrentMessageID(ctx, wordID, msgID)
+}
+
+func (s *Service) SendWithKeyboard(ctx context.Context, text string, wordID, chatID int, reverse bool) error {
+	resp, err := s.tgClient.Send(chatID, text, model.TelegramMessageOptionWithFormat, model.TelegramMessageOptionWithoutSound)
+	if err != nil {
+		return err
+	}
+
+	err = s.repo.UpdateWordCurrentMessageID(ctx, wordID, &resp.Result.MessageID)
 	if err != nil {
 		return err
 	}
