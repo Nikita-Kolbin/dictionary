@@ -24,6 +24,12 @@ func Info(ctx context.Context, msg string, args ...any) {
 	logger.InfoContext(ctx, msg, args...)
 }
 
+func Fatal(ctx context.Context, msg string, args ...any) {
+	args = append(args, funcName())
+	logger.ErrorContext(ctx, msg, args...)
+	os.Exit(1)
+}
+
 func funcName() slog.Attr {
 	pc, _, _, _ := runtime.Caller(2)
 	name := strings.Split(runtime.FuncForPC(pc).Name(), "/")

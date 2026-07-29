@@ -8,6 +8,7 @@ import (
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/metrics"
 )
 
 func (t *Telegram) RunTelegramProcessor(ctx context.Context) {
@@ -24,6 +25,8 @@ func (t *Telegram) processUpdates(ctx context.Context) {
 	if err != nil {
 		logger.Error(ctx, "can't get updates", "err", err)
 	}
+
+	metrics.CountTelegramMessages.Add(float64(len(updates)))
 
 	for _, u := range updates {
 		if u.Message != nil {
@@ -99,6 +102,7 @@ func (t *Telegram) processCommand(ctx context.Context, msg *model.Message) { //n
 	}
 
 	if err != nil {
+		metrics.CountErrorResponses.Inc()
 		logger.Error(ctx, "can't send message", "err", err)
 	}
 }
