@@ -7,7 +7,6 @@ import (
 	"github.com/Nikita-Kolbin/dictionary/internal/app/config"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/metrics"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

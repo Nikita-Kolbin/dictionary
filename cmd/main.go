@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/httpserver"
 	"os"
 
 	telegramAPI "github.com/Nikita-Kolbin/dictionary/internal/app/api/telegram"
@@ -11,6 +10,7 @@ import (
 	"github.com/Nikita-Kolbin/dictionary/internal/app/repository"
 	"github.com/Nikita-Kolbin/dictionary/internal/app/service"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/clients/telegram"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/httpserver"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
 )
 

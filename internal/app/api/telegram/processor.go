@@ -3,12 +3,12 @@ package telegram
 import (
 	"context"
 	"encoding/json"
-	"github.com/Nikita-Kolbin/dictionary/internal/pkg/metrics"
 	"strings"
 	"time"
 
 	"github.com/Nikita-Kolbin/dictionary/internal/app/model"
 	"github.com/Nikita-Kolbin/dictionary/internal/pkg/logger"
+	"github.com/Nikita-Kolbin/dictionary/internal/pkg/metrics"
 )
 
 func (t *Telegram) RunTelegramProcessor(ctx context.Context) {
