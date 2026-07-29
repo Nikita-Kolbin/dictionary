@@ -20,7 +20,7 @@ type Config struct {
 
 type ListenerConfig struct {
 	Host         string        `env:"HOST" envDefault:"0.0.0.0"`
-	Port         int32         `env:"PORT" envDefault:"8080"`
+	Port         int32         `env:"PORT" envDefault:"8082"`
 	ReadTimeout  time.Duration `env:"READ_TIMEOUT" envDefault:"5m"`
 	WriteTimeout time.Duration `env:"WRITE_TIMEOUT" envDefault:"1m"`
 	IdleTimeout  time.Duration `env:"IDLE_TIMEOUT" envDefault:"5s"`
